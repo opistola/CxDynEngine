@@ -1,0 +1,53 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.6.RELEASE'
+        springGradleVersion = '1.0.3.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("io.spring.gradle:dependency-management-plugin:${springGradleVersion}")
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+eclipse {
+    classpath {
+       downloadSources=true
+       downloadJavadoc=true
+    }
+}
+
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+
+dependencies {
+    compile(
+        'org.springframework.boot:spring-boot-starter-web',
+        'org.springframework:spring-web',
+        'com.google.guava:guava',
+        'joda-time:joda-time',
+        'com.fasterxml.jackson.datatype:jackson-datatype-joda',
+        'com.amazonaws:aws-java-sdk-ec2',
+        'org.apache.commons:commons-lang3:3.6'
+    )
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Camden.SR3'
+        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.159'
+    }
+}
