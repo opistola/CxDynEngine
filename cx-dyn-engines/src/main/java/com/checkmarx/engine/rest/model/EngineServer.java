@@ -1,8 +1,5 @@
 package com.checkmarx.engine.rest.model;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,7 +7,6 @@ import com.google.common.base.MoreObjects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class EngineServer {
 	
 	private Long id;
@@ -19,10 +15,10 @@ public class EngineServer {
 	private int minLoc;
 	private int maxLoc;
 	@JsonProperty(value="isAlive")
-	private Boolean isAlive; 
+	private Boolean alive; 
 	private int maxScans;
 	@JsonProperty(value="isBlocked")
-	private boolean isBlocked;
+	private boolean blocked;
 	private String cxVersion;
 	
 	public EngineServer() {
@@ -35,7 +31,7 @@ public class EngineServer {
 		this.minLoc = minLoc;
 		this.maxLoc = maxLoc;
 		this.maxScans = maxScans;
-		this.isBlocked = isBlocked;
+		this.blocked = isBlocked;
 	}
 
 	public Long getId() {
@@ -54,22 +50,32 @@ public class EngineServer {
 		return minLoc;
 	}
 
+	public void setMinLoc(int minLoc) {
+		this.minLoc = minLoc;
+	}
+
 	public int getMaxLoc() {
 		return maxLoc;
 	}
 
-	@JsonIgnore
+	public void setMaxLoc(int maxLoc) {
+		this.maxLoc = maxLoc;
+	}
+
 	public Boolean isAlive() {
-		return isAlive;
+		return alive;
 	}
 
 	public int getMaxScans() {
 		return maxScans;
 	}
 
-	@JsonIgnore
 	public boolean isBlocked() {
-		return isBlocked;
+		return blocked;
+	}
+
+	public void setBlocked(boolean blocked) {
+		this.blocked = blocked;
 	}
 
 	public String getCxVersion() {
@@ -84,9 +90,9 @@ public class EngineServer {
 				.add("uri", uri)
 				.add("minLOC", minLoc)
 				.add("maxLOC", maxLoc)
-				.add("isAlive", isAlive)
+				.add("isAlive", alive)
 				.add("maxScans", maxScans)
-				.add("isBlocked", isBlocked)
+				.add("isBlocked", blocked)
 				.add("cxVersion", cxVersion)
 				.omitNullValues()
 				.toString();

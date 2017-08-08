@@ -6,12 +6,12 @@ import com.google.common.base.MoreObjects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class LoginResponse {
+public class ErrorResponse {
 	
 	private Integer messageCode;
 	private String messageDetails;
 	
-	public LoginResponse() {
+	public ErrorResponse() {
 		// default .ctor for unmarshalling
 	}
 

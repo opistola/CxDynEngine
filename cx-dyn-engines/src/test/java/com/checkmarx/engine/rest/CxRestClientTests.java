@@ -10,6 +10,8 @@ import static org.junit.Assert.fail;
 
 import java.util.List;
 
+import org.assertj.core.util.Lists;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,8 +23,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.HttpClientErrorException;
 
 import com.checkmarx.engine.rest.model.EngineServer;
-import com.checkmarx.engine.rest.model.EngineServerResponse;
 import com.checkmarx.engine.rest.model.Login;
+import com.checkmarx.engine.rest.model.ScanRequest;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -31,11 +33,20 @@ public class CxRestClientTests {
 	private static final Logger log = LoggerFactory.getLogger(CxRestClientTests.class);
 
 	@Autowired
-	private CxRestClient restClient;
+	private CxRestClient sastClient;
+	
+	private final List<Long> engineIds = Lists.newArrayList();
 
 	@Before
 	public void setUp() throws Exception {
-		assertThat(restClient, notNullValue());
+		assertThat(sastClient, notNullValue());
+	}
+	
+	@After
+	public void tearDown() throws Exception {
+		for (Long id : engineIds) {
+			sastClient.unregisterEngine(id);
+		}
 	}
 
 	@Test
@@ -49,7 +60,7 @@ public class CxRestClientTests {
 	public void testBadLogin() {
 		log.trace("testBadLogin()");
 
-		final boolean success = restClient.login(new Login("bogus", "bogus"));
+		final boolean success = sastClient.login(new Login("bogus", "bogus"));
 		assertThat(success, is(false));
 		
 	}
@@ -59,7 +70,7 @@ public class CxRestClientTests {
 		log.trace("testGetEngineServers()");
 		login();
 		
-		final List<EngineServer> engines = restClient.getEngines();
+		final List<EngineServer> engines = sastClient.getEngines();
 		
 		assertThat(engines, is(notNullValue()));
 		assertThat(engines, hasSize(greaterThan(0)));
@@ -79,7 +90,7 @@ public class CxRestClientTests {
 		log.trace("testGetEngine()");
 		login();
 		
-		final EngineServer engine = restClient.getEngine(1);
+		final EngineServer engine = sastClient.getEngine(1);
 		assertThat(engine, is(notNullValue()));
 		assertThat(engine.getId(), is(equalTo(1L)));
 	}
@@ -89,7 +100,7 @@ public class CxRestClientTests {
 		log.trace("testGetBadEngine()");
 		login();
 		
-		restClient.getEngine(0);
+		sastClient.getEngine(0);
 		fail();
 	}
 	
@@ -98,17 +109,67 @@ public class CxRestClientTests {
 		log.trace("testRegisterEngine()");
 		login();
 		
-		final EngineServer engine = new EngineServer("name", "http://engine", 1, 1, 1, true);		
-		final EngineServerResponse response = restClient.registerEngine(engine);
-		assertThat(response, is(notNullValue()));
+		final EngineServer engine1 = createEngine();
+		final EngineServer engine2 = registerEngine(engine1);
 		
-		log.debug("{}", response);
+		log.debug("{}", engine2);
+
+		assertThat(engine2, is(notNullValue()));
+		this.engineIds.add(engine2.getId());
 		
-		restClient.unregisterEngine(response.getId());
+		assertThat(engine2.getId(), is(greaterThan(1L)));
+		assertThat(engine2.getMinLoc(), is(equalTo(engine1.getMinLoc())));
+		assertThat(engine2.getMaxLoc(), is(equalTo(engine1.getMaxLoc())));
+		assertThat(engine2.getMaxScans(), is(equalTo(engine1.getMaxScans())));
+		assertThat(engine2.getUri(), is(equalTo(engine1.getUri())));
+		assertThat(engine2.isBlocked(), is(equalTo(engine1.isBlocked())));
+		assertThat(engine2.isAlive(), is(equalTo(false)));
+	}
+	
+	@Test
+	public void testUpdateEngine() {
+		log.trace("testUpdateEngine()");
+		login();
+		
+		final EngineServer engine1 = registerEngine(createEngine());
+
+		log.debug("{}", engine1);
+
+		engine1.setBlocked(!engine1.isBlocked());
+		engine1.setMinLoc(10);
+		engine1.setMaxLoc(10);
+		final EngineServer engine2 = sastClient.updateEngine(engine1);
+		
+		log.debug("{}", engine2);
+		this.engineIds.add(engine2.getId());
+
+		assertThat(engine2.isBlocked(), is(equalTo(engine1.isBlocked())));
+		assertThat(engine2.getMinLoc(), is(equalTo(engine1.getMinLoc())));
+		assertThat(engine2.getMaxLoc(), is(equalTo(engine1.getMaxLoc())));
+	}
+	
+	@Test
+	public void testGetScanRequests() {
+		log.trace("testUpdateEngine()");
+		login();
+
+		final List<ScanRequest> scans = sastClient.getScanRequests();
+		for (ScanRequest scan : scans) {
+			log.debug("{}", scan);
+		}
+	}
+	
+	private EngineServer registerEngine(EngineServer engine) {
+		return sastClient.registerEngine(engine);
+	}
+	
+	private static final String ENGINE_URI = "http://engine/";
+	private EngineServer createEngine() {
+		return new EngineServer("name", ENGINE_URI, 1, 1, 1, true);
 	}
 	
 	private boolean login() {
-		return restClient.login(new Login("admin@cx", "Im@hom3y!!"));
+		return sastClient.login(new Login("admin@cx", "Im@hom3y!!"));
 	}
 
 }
