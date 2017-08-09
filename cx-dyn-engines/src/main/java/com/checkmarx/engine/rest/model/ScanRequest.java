@@ -14,6 +14,9 @@ import com.google.common.base.MoreObjects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ScanRequest {
+	
+	private static final String TZ = "America/Chicago";
+	private static final String DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
 	private long id;
 	private String runId;
@@ -23,11 +26,11 @@ public class ScanRequest {
 	private Long engineId;
 	private Integer loc;
 	private ProgramLanguage[] languages;
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSS", timezone="America/Chicago")
+	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
 	private DateTime dateCreated;
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSS", timezone="America/Chicago")
+	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
 	private DateTime queuedOn;
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSS", timezone="America/Chicago")
+	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
 	private DateTime engineStartedOn;
 	@JsonProperty(value = "isIncremental")
 	private boolean incremental;
