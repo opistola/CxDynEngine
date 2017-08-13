@@ -14,6 +14,11 @@ public class ErrorResponse {
 	public ErrorResponse() {
 		// default .ctor for unmarshalling
 	}
+	
+	public ErrorResponse(Integer messageCode, String messageDetails) {
+		this.messageCode = messageCode;
+		this.messageDetails = messageDetails;
+	}
 
 	public Integer getMessageCode() {
 		return messageCode;

@@ -3,6 +3,7 @@ package com.checkmarx.engine.rest;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 import com.checkmarx.engine.rest.model.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Stopwatch;
 
 @Component
 public class CxRestClient {
@@ -50,6 +52,39 @@ public class CxRestClient {
 				.additionalInterceptors(this.authInterceptor)
 				.build();
 	}
+	
+	private interface Request<R> {
+		public R send();
+	}
+	
+	private <T,R> R execute(String operation, Request<R> request) {
+		final Stopwatch timer = Stopwatch.createStarted();
+		boolean success = false;
+		try {
+			R result = request.send();
+			success = true;
+			return result;
+		} catch (HttpClientErrorException e) {
+			final ErrorResponse error = unmarshallError(e.getResponseBodyAsString());
+			log.warn("Cx rest call failed: request={}; {}", operation, error);
+			throw e;
+		} finally {
+			log.debug("Cx api call; request={}; success={}; elapsed={}", 
+					operation, success, timer.elapsed(TimeUnit.MILLISECONDS)); 
+		}
+	}
+
+	private ErrorResponse unmarshallError(String content) {
+		log.trace("unmarshallError(): {}", content);
+		
+		final ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.readValue(content, ErrorResponse.class);
+		} catch (IOException e) {
+			log.warn("Failed to unmarshall login response: content={}; cause={}", content, e.getMessage());
+		}
+		return new ErrorResponse(-1, content);
+	}
 
 	public boolean login(Login login) {
 		log.debug("login(): {}", login);
@@ -57,33 +92,13 @@ public class CxRestClient {
 		final String url = buildUrl(AUTH_API_URL);
 
 		final HttpEntity<Login> request = new HttpEntity<Login>(login);
-		try {
+		execute("login", () -> {
 			sastClient.postForObject(url, request, ErrorResponse.class);
 			return true;
-		} catch (HttpClientErrorException e) {
-			final ErrorResponse loginResponse = tryUnmarshallErrorResponse(e.getResponseBodyAsString());
-			log.warn("Login failed: {}", loginResponse);
-		} catch (HttpServerErrorException e) {
-			log.warn("Login failed", e);
-		} catch (RestClientException e) {
-			log.warn("Login failed", e);
-		}
-		
+		});
 		return false;
 	}
 	
-	private ErrorResponse tryUnmarshallErrorResponse(String content) {
-		log.trace("tryUnmarshallErrorResponse(): {}", content);
-		
-		final ObjectMapper mapper = new ObjectMapper();
-		try {
-			return mapper.readValue(content, ErrorResponse.class);
-		} catch (IOException e) {
-			log.warn("Failed to unmarshall login response: {}", e.getMessage());
-		}
-		return null;
-	}
-
 	public List<EngineServer> getEngines() {
 		log.debug("getEngines()");
 		
