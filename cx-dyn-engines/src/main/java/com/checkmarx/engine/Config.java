@@ -1,7 +1,5 @@
 package com.checkmarx.engine;
 
-import java.util.UUID;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import com.google.common.base.MoreObjects;
@@ -14,10 +12,6 @@ public class Config {
 	private String password;
 	
 	private String cxUrl;
-	
-	private String callbackUrl;
-	
-	private String callbackSecret = UUID.randomUUID().toString();
 	
 	private int timeoutSecs = 20;
 	
@@ -47,22 +41,6 @@ public class Config {
 		this.cxUrl = url;
 	}
 
-	public String getCallbackUrl() {
-		return callbackUrl;
-	}
-
-	public void setCallbackUrl(String callbackUrl) {
-		this.callbackUrl = callbackUrl;
-	}
-
-	public String getCallbackSecret() {
-		return callbackSecret;
-	}
-
-	public void setCallbackSecret(String callbackSecret) {
-		this.callbackSecret = callbackSecret;
-	}
-
 	public int getTimeoutSecs() {
 		return timeoutSecs;
 	}
@@ -84,7 +62,6 @@ public class Config {
 		return MoreObjects.toStringHelper(this)
 				.add("userName", userName)
 				.add("cxUrl", cxUrl)
-				.add("callbackUrl", callbackUrl)
 				.add("timeoutSecs", timeoutSecs)
 				.add("cxEngineUrlPath", getCxEngineUrlPath())
 				.toString();

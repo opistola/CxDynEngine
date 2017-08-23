@@ -40,6 +40,7 @@ public class CxRestClientTests {
 	@Before
 	public void setUp() throws Exception {
 		assertThat(sastClient, notNullValue());
+		assertThat(login(), is(true));
 	}
 	
 	@After
@@ -50,25 +51,16 @@ public class CxRestClientTests {
 	}
 
 	@Test
-	public void testLogin() {
-		log.trace("testLogin()");
-
-		assertThat(login(), is(true));
-	}
-	
-	@Test
 	public void testBadLogin() {
 		log.trace("testBadLogin()");
 
 		final boolean success = sastClient.login(new Login("bogus", "bogus"));
 		assertThat(success, is(false));
-		
 	}
 	
 	@Test
 	public void testGetEngineServers() {
 		log.trace("testGetEngineServers()");
-		login();
 		
 		final List<EngineServer> engines = sastClient.getEngines();
 		
@@ -79,16 +71,16 @@ public class CxRestClientTests {
 			log.debug("{}", eng);
 		}
 
-		final EngineServer engine = engines.get(0); 
-		assertThat(engine.isAlive(), is(true));
-		assertThat(engine.isBlocked(), is(false));
+		final EngineServer engine = engines.get(0);
+		assertThat(engine.getName(), is("Localhost"));
+		//assertThat(engine.isAlive(), is(true));
+		//assertThat(engine.isBlocked(), is(false));
 		
 	}
 	
 	@Test
 	public void testGetEngine() {
 		log.trace("testGetEngine()");
-		login();
 		
 		final EngineServer engine = sastClient.getEngine(1);
 		assertThat(engine, is(notNullValue()));
@@ -98,7 +90,6 @@ public class CxRestClientTests {
 	@Test(expected=HttpClientErrorException.class)
 	public void testGetBadEngine() {
 		log.trace("testGetBadEngine()");
-		login();
 		
 		sastClient.getEngine(0);
 		fail();
@@ -107,7 +98,6 @@ public class CxRestClientTests {
 	@Test
 	public void testRegisterEngine() {
 		log.trace("testRegisterEngine()");
-		login();
 		
 		final EngineServer engine1 = createEngine();
 		final EngineServer engine2 = registerEngine(engine1);
@@ -129,7 +119,6 @@ public class CxRestClientTests {
 	@Test
 	public void testUpdateEngine() {
 		log.trace("testUpdateEngine()");
-		login();
 		
 		final EngineServer engine1 = registerEngine(createEngine());
 
@@ -149,11 +138,11 @@ public class CxRestClientTests {
 	}
 	
 	@Test
-	public void testGetScanRequests() {
-		log.trace("testUpdateEngine()");
-		login();
+	public void testGetScansQueue() {
+		log.trace("testGetScansQueue()");
 
-		final List<ScanRequest> scans = sastClient.getScanRequests();
+		final List<ScanRequest> scans = sastClient.getScansQueue();
+		assertThat(scans, is(notNullValue()));
 		for (ScanRequest scan : scans) {
 			log.debug("{}", scan);
 		}

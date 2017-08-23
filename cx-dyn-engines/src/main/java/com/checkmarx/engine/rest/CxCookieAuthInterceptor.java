@@ -26,7 +26,7 @@ public class CxCookieAuthInterceptor implements ClientHttpRequestInterceptor {
 	
 	private static final Logger log = LoggerFactory.getLogger(CxCookieAuthInterceptor.class);
 
-	private static final String COOKIE_HEADER = "Cookie";
+	//private static final String COOKIE_HEADER = "Cookie";
 	private static final String CX_CSRF_COOKIE = "CXCSRFToken";
 	private static final String CX_SESSION_COOKIE = "cxCookie";
 	
@@ -60,10 +60,11 @@ public class CxCookieAuthInterceptor implements ClientHttpRequestInterceptor {
 	@Override
 	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
 			throws IOException {
-		log.debug("intercept()");
+		log.trace("intercept()");
 		
 		if (cookies.length() > 0) {
-			request.getHeaders().add(COOKIE_HEADER, cookies.toString());
+			//HttpClient automatically adds the cookies, just add the CSRF token
+			//request.getHeaders().add(COOKIE_HEADER, cookies.toString());
 			request.getHeaders().add(CX_CSRF_COOKIE, csrfToken);
 		}
 		
@@ -80,7 +81,7 @@ public class CxCookieAuthInterceptor implements ClientHttpRequestInterceptor {
 			return response;
 		}
 		
-		log.debug("Response has cookies: count={}", headers.size());
+		log.trace("Response has cookies: count={}", headers.size());
 		List<HttpCookie> setCookies = Lists.newArrayList();
 		for (String header : headers) {
 			setCookies.addAll(HttpCookie.parse(header));
