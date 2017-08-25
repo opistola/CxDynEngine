@@ -2,6 +2,7 @@ package com.checkmarx.engine.domain;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -17,86 +18,91 @@ public class EnginePool {
 	private static final Logger log = LoggerFactory.getLogger(EnginePool.class);
 	
 	//immutable after initialization
-	private final Map<ScanSize, List<DynamicEngine>> allEngines = Maps.newLinkedHashMap();
-	private final Map<ScanSize, List<DynamicEngine>> activeEngines = Maps.newConcurrentMap();
-	private final Map<ScanSize, List<DynamicEngine>> idleEngines = Maps.newConcurrentMap();
-	private final Map<ScanSize, List<DynamicEngine>> expiringEngines = Maps.newConcurrentMap();
-	private final Map<ScanSize, List<DynamicEngine>> unprovisionedEngines = Maps.newConcurrentMap();
+	private final Map<String, List<DynamicEngine>> allEngines = Maps.newLinkedHashMap();
+	private final Map<String, List<DynamicEngine>> activeEngines = Maps.newConcurrentMap();
+	private final Map<String, List<DynamicEngine>> idleEngines = Maps.newConcurrentMap();
+	private final Map<String, List<DynamicEngine>> expiringEngines = Maps.newConcurrentMap();
+	private final Map<String, List<DynamicEngine>> unprovisionedEngines = Maps.newConcurrentMap();
+	private final Map<String, ScanSize> scanSizes = Maps.newConcurrentMap();
 	
-	private final Map<DynamicEngine.State, Map<ScanSize, List<DynamicEngine>>> engineMaps 
+	private final Map<DynamicEngine.State, Map<String, List<DynamicEngine>>> engineMaps 
 		= Maps.newEnumMap(DynamicEngine.State.class);
 
 	//immutable after initialization
 	private final Map<ScanSize, AtomicLong> engineSizes = Maps.newLinkedHashMap();
 	
-	protected EnginePool() {
+	protected EnginePool(Set<ScanSize> sizes) {
 		engineMaps.put(DynamicEngine.State.ALL, allEngines);
-		engineMaps.put(DynamicEngine.State.ACTIVE, activeEngines);
+		engineMaps.put(DynamicEngine.State.SCANNING, activeEngines);
 		engineMaps.put(DynamicEngine.State.EXPIRING, expiringEngines);
 		engineMaps.put(DynamicEngine.State.IDLE, idleEngines);
 		engineMaps.put(DynamicEngine.State.UNPROVISIONED, unprovisionedEngines);
+		initSizeMaps(sizes);
 	}
 	
-	public EnginePool(List<DynamicEngine> engines) {
-		this();
+	private void initSizeMaps(Set<ScanSize> sizes) {
+		sizes.forEach((scanSize) -> {
+			scanSizes.put(scanSize.getName(), scanSize);
+			engineSizes.put(scanSize, new AtomicLong(0));
+		});
+	}
+
+	public EnginePool(Set<ScanSize> sizes, Set<DynamicEngine> engines) {
+		this(sizes);
 		engines.forEach(engine->addEngine(engine));
 	}
 	
-	public Map<ScanSize, List<DynamicEngine>> getAllEngines() {
+	public Map<String, List<DynamicEngine>> getAllEngines() {
 		return allEngines;
 	}
 
-	public Map<ScanSize, List<DynamicEngine>> getActiveEngines() {
+	public Map<String, List<DynamicEngine>> getActiveEngines() {
 		return activeEngines;
 	}
 
-	public Map<ScanSize, List<DynamicEngine>> getIdleEngines() {
+	public Map<String, List<DynamicEngine>> getIdleEngines() {
 		return idleEngines;
 	}
 
-	public Map<ScanSize, List<DynamicEngine>> getExpiringEngines() {
+	public Map<String, List<DynamicEngine>> getExpiringEngines() {
 		return expiringEngines;
 	}
 
-	public Map<ScanSize, List<DynamicEngine>> getUnprovisionedEngines() {
+	public Map<String, List<DynamicEngine>> getUnprovisionedEngines() {
 		return unprovisionedEngines;
 	}
 
-	private void initEngineMaps(ScanSize size, Map<ScanSize, List<DynamicEngine>> map) {
+	private void initEngineMaps(String size, Map<String, List<DynamicEngine>> map) {
 		if (map.containsKey(size)) return;
 		map.put(size, Lists.newArrayList());
 	}
 	
-	private void initEngineSizes(ScanSize size) {
-		if (engineSizes.get(size) == null) 
-			engineSizes.put(size, new AtomicLong(0));
-		engineSizes.get(size).incrementAndGet();
-	}
-	
 	private void addEngine(DynamicEngine engine) {
-		final ScanSize size = engine.getSize();
+		final String size = engine.getSize();
+		final ScanSize scanSize = scanSizes.get(size);
 		final DynamicEngine.State state = engine.getState();
 		
-		initEngineSizes(size);
+		//initEngineSizes(size);
+		engineSizes.get(scanSize).incrementAndGet();
 		engineMaps.forEach((k, map)->initEngineMaps(size, map));
 		allEngines.get(size).add(engine);
 		engineMaps.get(state).get(size).add(engine);
+		engine.setEnginePool(this);
 	}
 	
-	// default scope for unit testing
-	void changeState(DynamicEngine engine, DynamicEngine.State toState) {
-		
-		if (toState.equals(DynamicEngine.State.ALL)) 
+	public void changeState(DynamicEngine engine, State fromState, State toState) {
+		if (toState.equals(State.ALL)) 
 			throw new IllegalArgumentException("Cannot set Engine state to ALL");
 		
-		DynamicEngine.State curState = engine.getState();
-		ScanSize size = engine.getSize();
+		String size = engine.getSize();
 		
-		if (curState.equals(toState)) return;
+		if (fromState.equals(toState)) return;
 		
-		engineMaps.get(curState).get(size).remove(engine);
+		engineMaps.get(fromState).get(size).remove(engine);
 		engineMaps.get(toState).get(size).add(engine);
-
+	}
+	
+	void changeState(DynamicEngine engine, State toState) {
 		engine.setState(toState);
 	}
 
@@ -113,7 +119,7 @@ public class EnginePool {
 		log.trace("allocateEngine() : size={}; state={}", size.getName(), fromState);
 		
 		
-		final Map<ScanSize, List<DynamicEngine>> engineMap = engineMaps.get(fromState);
+		final Map<String, List<DynamicEngine>> engineMap = engineMaps.get(fromState);
 		if (engineMap == null) return null;
 		final List<DynamicEngine> engineList = engineMap.get(size);
 		
@@ -121,7 +127,7 @@ public class EnginePool {
 			if (engineList == null || engineList.size() == 0) return null;
 			
 			final DynamicEngine engine = engineList.get(0);
-			changeState(engine, DynamicEngine.State.ACTIVE);
+			changeState(engine, State.SCANNING);
 			log.debug("Engine allocated: pool={}", this);
 			return engine;
 		}

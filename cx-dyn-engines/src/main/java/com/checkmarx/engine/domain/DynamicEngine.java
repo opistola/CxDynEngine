@@ -23,14 +23,14 @@ public class DynamicEngine {
 
 	public enum State {
 		ALL,
-		ACTIVE,
+		SCANNING,
 		EXPIRING,
 		IDLE,
 		UNPROVISIONED;
 	}
 	
 	private final String name;
-	private final ScanSize size;
+	private final String size;
 	private State state = State.UNPROVISIONED;
 	private DateTime currentStateTime = DateTime.now();
 	private DateTime timeToExpire;
@@ -38,14 +38,36 @@ public class DynamicEngine {
 	private Map<State, Duration> elapsedTimes = Maps.newConcurrentMap();
 	private final int expireDurationSecs;
 	private DateTime launchTime;
+	private EnginePool enginePool;
 
-	public DynamicEngine(String name, ScanSize size, int expireDurationSecs) {
+	public void setEnginePool(EnginePool enginePool) {
+		this.enginePool = enginePool;
+	}
+
+	public DynamicEngine(String name, String size, int expireDurationSecs) {
+		this(name, size, expireDurationSecs, null);
+	}
+	
+	public DynamicEngine(String name, String size, int expireDurationSecs, EnginePool enginePool) {
 		this.name = name;
 		this.size = size;
 		this.expireDurationSecs = expireDurationSecs;
+		this.enginePool = enginePool;
 		initElapsedTimes();
 	}
-
+	
+	public static DynamicEngine fromProvisionedInstance(
+			String name, String size, int expireDurationSecs,
+			DateTime launchTime, boolean isRunning) {
+		final DynamicEngine engine = new DynamicEngine(name, size, expireDurationSecs);
+		engine.launchTime = launchTime;
+		if (isRunning) {
+			engine.state = State.IDLE;
+			engine.timeToExpire = engine.calcExpirationTime();
+		}
+		return engine;
+	}
+	
 	private void initElapsedTimes() {
 		final Duration zero = new Duration(0);
 		for (State state : State.values()) {
@@ -57,7 +79,7 @@ public class DynamicEngine {
 		return name;
 	}
 
-	public ScanSize getSize() {
+	public String getSize() {
 		return size;
 	}
 
@@ -80,19 +102,19 @@ public class DynamicEngine {
 	public DateTime getLaunchTime() {
 		return launchTime;
 	}
-
+	
 	public DateTime getTimeToExpire() {
 		return timeToExpire;
 	}
 	
-	public void setState(State state) {
-		log.debug("setState(): currentState={}; newState={}", this.state, state);
+	public void setState(State toState) {
+		final State curState = this.state; 
+		log.debug("setState(): currentState={}; newState={}; {}", curState, toState, this);
 		
 		//sanity check
-		if (this.state.equals(state)) {
-			final String msg = "Attempting to set DynamicEngine state to current state; state=" + state;
-			log.warn(msg);
-			throw new IllegalArgumentException(msg);
+		if (curState.equals(toState)) {
+			log.warn("Setting DynamicEngine state to current state; state={}", toState);
+			return;
 		}
 		
 		// before changing state, update current state elapsed time
@@ -100,18 +122,17 @@ public class DynamicEngine {
 		elapsedTimes.put(this.state, currentDuration.plus(getElapsedTime()));
 
 		// if current state is UNPROVISIONED, set launch time
-		if (this.state.equals(State.UNPROVISIONED)) {
+		if (curState.equals(State.UNPROVISIONED)) {
 			launchTime = DateTime.now();
 			timeToExpire = launchTime.plusSeconds(this.expireDurationSecs);
 		}
 
 		// update state
-		this.state = state;
+		this.state = toState;
 		currentStateTime = DateTime.now();
 		
-		
 		// if new state is UNPROVISIONED, clear applicable items
-		switch (state) {
+		switch (toState) {
 			case UNPROVISIONED :
 				host = null;
 				launchTime = null;
@@ -120,14 +141,15 @@ public class DynamicEngine {
 			case IDLE : 
 				timeToExpire = calcExpirationTime();
 				break;
-			case ACTIVE :
+			case SCANNING :
 				timeToExpire = null;
 				break;
 			default:
 				break;
 		}
+		if (enginePool != null) enginePool.changeState(this, curState, toState);
 	}
-
+	
 	DateTime calcExpirationTime() {
 		final Duration runTime = getRunTime();
 		Long factor = Math.floorMod(runTime.getStandardSeconds(), expireDurationSecs) + 1;
@@ -169,7 +191,7 @@ public class DynamicEngine {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("name", name)
-				.add("size", size.getName())
+				.add("size", size)
 				.add("state", state)
 				.add("elapsedTime", getElapsedTime().getStandardSeconds())
 				.add("launchTime", launchTime)

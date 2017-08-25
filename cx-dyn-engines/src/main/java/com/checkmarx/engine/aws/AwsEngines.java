@@ -1,20 +1,28 @@
 package com.checkmarx.engine.aws;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.util.StringUtils;
+import com.checkmarx.engine.aws.Ec2.InstanceState;
 import com.checkmarx.engine.domain.DynamicEngine;
+import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.ScanSize;
 import com.checkmarx.engine.domain.Host;
 import com.checkmarx.engine.manager.EngineProvisioner;
 import com.checkmarx.engine.rest.CxRestClient;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -27,27 +35,28 @@ public class AwsEngines implements EngineProvisioner {
 	private static final Logger log = LoggerFactory.getLogger(AwsEngines.class);
 	
 	private final AwsConfig config;
-	private final AwsComputeClient ec2;
+	private final AwsComputeClient ec2Client;
 	private final CxRestClient cxClient;
 	private final int pollingMillis;
 	// key=engine name
-	private final Map<String, Instance> activeEngines = Maps.newConcurrentMap();
-	private final Map<String, String> engineSizeMap;
+	private final Map<String, Instance> provisionedEngines = Maps.newConcurrentMap();
+	// key=size name, value=instanceType
+	private final Map<String, String> engineTypeMap;
 	
 	public AwsEngines(
 			AwsComputeClient awsClient, 
 			CxRestClient engineClient) {
 		
-		this.ec2 = awsClient;
+		this.ec2Client = awsClient;
 		this.config = awsClient.getConfig(); 
 		this.cxClient = engineClient;
-		this.engineSizeMap = config.getEngineSizeMap();
+		this.engineTypeMap = config.getEngineTypeMap();
 		this.pollingMillis = config.getPollingIntervalSecs() * 1000;
 		
 		log.info("ctor(): {}", this);
 	}
 	
-	public static Map<String, String> createCxTags(CxRoles role, String version) {
+	public static Map<String, String> createCxTags(CxRole role, String version) {
 		log.trace("createCxTags(): role={}; version={}", role, version);
 		
 		final Map<String, String> tags = Maps.newHashMap();
@@ -55,53 +64,158 @@ public class AwsEngines implements EngineProvisioner {
 		tags.put(CX_VERSION_TAG, version);
 		return tags;
 	}
+	
+	private Map<String, String> createEngineTags(String size) {
+		log.trace("createEngineTags(): size={}", size);
+		final Map<String, String> tags = createCxTags(CxRole.ENGINE, config.getCxVersion());
+		tags.put(CX_SIZE_TAG, size);
+		return tags;
+	}
+
+	Map<String, Instance> findEngines() {
+		log.trace("findEngines()");
+		
+		final Stopwatch timer = Stopwatch.createStarted(); 
+		try {
+			final List<Instance> engines = ec2Client.find(CX_ROLE_TAG, CxRole.ENGINE.toString());
+			engines.forEach((instance) -> {
+				if (Ec2.isTerminated(instance)) {
+					log.info("Terminated engine found: {}", Ec2.print(instance));
+					return;
+				}
+
+				final String name = Ec2.getName(instance);
+				if (!provisionedEngines.containsKey(name)) {
+					provisionedEngines.put(name, instance);
+					log.info("Provisioned engine found: {}", Ec2.print(instance));
+				}
+			});
+			
+		} finally {
+			log.debug("Find Engines: elapsedTime={}ms; count={}", 
+					timer.elapsed(TimeUnit.MILLISECONDS), provisionedEngines.size()); 
+		}
+		return provisionedEngines;
+	}
+	
+	@Override
+	public List<DynamicEngine> listEngines() {
+		final Map<String, Instance> engines = findEngines();
+		final List<DynamicEngine> dynEngines = Lists.newArrayList();
+		engines.forEach((name, instance) -> {
+			final DynamicEngine engine = buildDynamicEngine(name, instance);
+			dynEngines.add(engine);
+		});
+		return dynEngines;
+	}
+
+	DynamicEngine buildDynamicEngine(String name, Instance instance) {
+		final String size = lookupEngineSize(instance);
+		final DateTime launchTime = new DateTime(instance.getLaunchTime());
+		final boolean isRunning = 
+				InstanceState.from(instance.getState().getCode()).equals(InstanceState.RUNNING);
+		final DynamicEngine engine = DynamicEngine.fromProvisionedInstance(
+				name, size, AwsConstants.BILLING_INTERVAL_SECS,
+				launchTime, isRunning);
+		if (isRunning) {
+			engine.setHost(createHost(name, instance));
+		}
+		return engine;
+	}
+
+	private String lookupEngineSize(Instance instance) {
+		String sizeTag = Ec2.getTag(instance, CX_SIZE_TAG);
+		if (!StringUtils.isNullOrEmpty(sizeTag)) return sizeTag;
+		
+		final Map<String, String> sizeMap = config.getEngineTypeMap();
+		
+		for (Entry<String,String> entry : sizeMap.entrySet()) {
+			String instanceType = entry.getValue();
+			String size = entry.getKey();
+			if (instance.getInstanceType().equals(instanceType))
+				return size;
+		}
+		// if not found, return first size in map
+		return Iterables.getFirst(sizeMap.values(), "S"); 
+	}
 
 	@Override
 	public void launch(DynamicEngine engine, ScanSize size, boolean waitForSpinup) {
 		log.trace("launch() : {}; size={}", engine, size);
 		
-		final String name = engine.getName();
-		final String type = engineSizeMap.get(size.getName());
+		findEngines();
 		
-		Instance instance = activeEngines.get(name);
+		final String name = engine.getName();
+		final String type = engineTypeMap.get(size.getName());
+		final Map<String, String> tags = createEngineTags(size.getName());
+		
+		Instance instance = provisionedEngines.get(name);
 		String instanceId = null;
 		
 		final Stopwatch timer = Stopwatch.createStarted(); 
 		try {
-		
 			if (instance == null) {
-				instance = launchEngine(engine, name, type);
+				instance = launchEngine(engine, name, type, tags);
 			}
 
 			instanceId = instance.getInstanceId();
 			
-			if (!ec2.isProvisioned(instanceId)) {
-				instance = launchEngine(engine, name, type);
+			if (Ec2.isTerminated(instance)) {
+				instance = launchEngine(engine, name, type, tags);
 				instanceId = instance.getInstanceId();
-			} else if (!ec2.isRunning(instanceId)) {
-				ec2.start(instanceId);
+			} else if (!ec2Client.isRunning(instanceId)) {
+				ec2Client.start(instanceId);
+			} else {
+				engine.setHost(createHost(name, instance));
 			}
 			
 			if (waitForSpinup) {
 				waitForSpinup(instance);
 			}
-
+			engine.setHost(createHost(name, instance));
+			engine.setState(State.IDLE);
+			
 		} finally {
 			log.debug("Launched instance: name={}; id={}; elapsedTime={}s; {}", 
-					name, instanceId, timer.elapsed(TimeUnit.SECONDS), instance); 
+					name, instanceId, timer.elapsed(TimeUnit.SECONDS), Ec2.print(instance)); 
 		}
 	}
 
-	private Instance launchEngine(final DynamicEngine engine, final String name, final String type) {
+	@Override
+	public void stop(DynamicEngine engine) {
+		log.trace("stop() : {}", engine);
+
+		final String name = engine.getName();
+		final Instance instance = provisionedEngines.get(name);
+		
+		if (instance == null) {
+			throw new RuntimeException("Cannot stop engine, no instance found");
+		}
+		
+		final String instanceId = instance.getInstanceId();
+		if (config.isTerminateOnStop()) {
+			ec2Client.terminate(instanceId);
+			engine.setState(State.UNPROVISIONED);
+		} else {
+			ec2Client.stop(instanceId);
+			engine.setState(State.IDLE);
+		}
+		
+	}
+
+	private Instance launchEngine(final DynamicEngine engine, final String name, 
+			final String type, final Map<String, String> tags) {
 		log.debug("launchEngine(): name={}; type={}", name, type);
 		
-		final Instance instance = ec2.launch(name, type, 
-				createCxTags(CxRoles.ENGINE, config.getCxVersion()));
-		final String ip = getIpAddress(instance);
-		final Host host = new Host(name, ip, buildUrl(ip));
-		engine.setHost(host);
-		activeEngines.put(name, instance);
+		final Instance instance = ec2Client.launch(name, type, tags);
+		//engine.setState(State.SCANNING);
+		provisionedEngines.put(name, instance);
 		return instance;
+	}
+
+	private Host createHost(final String name, final Instance instance) {
+		final String ip = getIpAddress(instance);
+		return new Host(name, ip, buildUrl(ip));
 	}
 
 	private void waitForSpinup(Instance instance) {
@@ -125,7 +239,7 @@ public class AwsEngines implements EngineProvisioner {
 		while (ip == null) {
 			try {
 				Thread.sleep(pollingMillis);
-				Instance newInstance = ec2.describe(instanceId);
+				Instance newInstance = ec2Client.describe(instanceId);
 				ip = newInstance.getPublicIpAddress();
 			} catch (InterruptedException e) {
 				final String msg = String.format("Interrupted while waiting for AWS instanceId=%1s", 
@@ -142,24 +256,10 @@ public class AwsEngines implements EngineProvisioner {
 	}
 
 	@Override
-	public void stop(DynamicEngine engine) {
-		log.trace("stop() : {}", engine);
-
-		final String name = engine.getName();
-		final Instance instance = activeEngines.get(name);
-		
-		if (instance == null) {
-			throw new RuntimeException("Cannot stop engine, no instance found");
-		}
-		
-		final String instanceId = instance.getInstanceId();
-		ec2.stop(instanceId);
-	}
-
-	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("config", config)
 				.toString();
 	}
+
 }

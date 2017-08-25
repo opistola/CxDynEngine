@@ -48,29 +48,29 @@ public class EnginePoolTests {
 		log.debug("{}", pool);
 
 		assertEquals(3, pool.getAllEngines().size());
-		assertEquals(3, pool.getAllEngines().get(SMALL).size());
-		assertEquals(3, pool.getAllEngines().get(MEDIUM).size());
-		assertEquals(3, pool.getAllEngines().get(LARGE).size());
+		assertEquals(3, pool.getAllEngines().get(SMALL.getName()).size());
+		assertEquals(3, pool.getAllEngines().get(MEDIUM.getName()).size());
+		assertEquals(3, pool.getAllEngines().get(LARGE.getName()).size());
 
 		assertEquals(3, pool.getUnprovisionedEngines().size());
-		assertEquals(3, pool.getUnprovisionedEngines().get(SMALL).size());
-		assertEquals(3, pool.getUnprovisionedEngines().get(MEDIUM).size());
-		assertEquals(3, pool.getUnprovisionedEngines().get(LARGE).size());
+		assertEquals(3, pool.getUnprovisionedEngines().get(SMALL.getName()).size());
+		assertEquals(3, pool.getUnprovisionedEngines().get(MEDIUM.getName()).size());
+		assertEquals(3, pool.getUnprovisionedEngines().get(LARGE.getName()).size());
 		
 		assertEquals(3, pool.getActiveEngines().size());
-		assertEquals(0, pool.getActiveEngines().get(SMALL).size());
-		assertEquals(0, pool.getActiveEngines().get(MEDIUM).size());
-		assertEquals(0, pool.getActiveEngines().get(LARGE).size());
+		assertEquals(0, pool.getActiveEngines().get(SMALL.getName()).size());
+		assertEquals(0, pool.getActiveEngines().get(MEDIUM.getName()).size());
+		assertEquals(0, pool.getActiveEngines().get(LARGE.getName()).size());
 
 		assertEquals(3, pool.getExpiringEngines().size());
-		assertEquals(0, pool.getExpiringEngines().get(SMALL).size());
-		assertEquals(0, pool.getExpiringEngines().get(MEDIUM).size());
-		assertEquals(0, pool.getExpiringEngines().get(LARGE).size());
+		assertEquals(0, pool.getExpiringEngines().get(SMALL.getName()).size());
+		assertEquals(0, pool.getExpiringEngines().get(MEDIUM.getName()).size());
+		assertEquals(0, pool.getExpiringEngines().get(LARGE.getName()).size());
 
 		assertEquals(3, pool.getIdleEngines().size());
-		assertEquals(0, pool.getIdleEngines().get(SMALL).size());
-		assertEquals(0, pool.getIdleEngines().get(MEDIUM).size());
-		assertEquals(0, pool.getIdleEngines().get(LARGE).size());
+		assertEquals(0, pool.getIdleEngines().get(SMALL.getName()).size());
+		assertEquals(0, pool.getIdleEngines().get(MEDIUM.getName()).size());
+		assertEquals(0, pool.getIdleEngines().get(LARGE.getName()).size());
 	}
 	
 	
@@ -78,13 +78,13 @@ public class EnginePoolTests {
 	public void testChangeState() throws InterruptedException {
 		log.trace("testChangeState()");
 		
-		DynamicEngine engine = pool.getUnprovisionedEngines().get(SMALL).get(0);
-		ScanSize size = engine.getSize();
+		DynamicEngine engine = pool.getUnprovisionedEngines().get(SMALL.getName()).get(0);
+		String size = engine.getSize();
 		
-		pool.changeState(engine, DynamicEngine.State.ACTIVE);
+		pool.changeState(engine, DynamicEngine.State.SCANNING);
 		assertEquals(1, pool.getActiveEngines().get(size).size());
 		assertEquals(2, pool.getUnprovisionedEngines().get(size).size());
-		assertEquals(DynamicEngine.State.ACTIVE, engine.getState());
+		assertEquals(DynamicEngine.State.SCANNING, engine.getState());
 		
 		Thread.sleep(100);
 		assertTrue(engine.getElapsedTime().getMillis() >= 100);

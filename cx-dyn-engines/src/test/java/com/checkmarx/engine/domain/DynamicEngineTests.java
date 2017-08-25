@@ -25,7 +25,7 @@ public class DynamicEngineTests {
 		
 		final int EXPIRE_DURATION = 3;
 		
-		final DynamicEngine engine = new DynamicEngine("name", new ScanSize("S", 0, 1), EXPIRE_DURATION);
+		final DynamicEngine engine = new DynamicEngine("name", "S", EXPIRE_DURATION);
 		log.debug("unprovisioned: {}", engine);
 		assertThat(engine.getState(), is(State.UNPROVISIONED));
 		assertThat(engine.getRunTime(), is(Duration.ZERO));
@@ -44,9 +44,9 @@ public class DynamicEngineTests {
 		final Duration firstExpireDuration = new Duration(engine.getLaunchTime(), firstTimeToExpire);
 		assertThat(firstExpireDuration.getMillis(), is(EXPIRE_DURATION * 1000L));
 		
-		engine.setState(State.ACTIVE);
+		engine.setState(State.SCANNING);
 		log.debug("active: {}", engine);
-		assertThat(engine.getState(), is(State.ACTIVE));
+		assertThat(engine.getState(), is(State.SCANNING));
 		assertThat(engine.getTimeToExpire(), is(nullValue()));
 		assertThat(engine.getRunTime().getStandardSeconds(), is(1L));
 

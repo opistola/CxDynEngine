@@ -45,7 +45,7 @@ public class AwsConfigTests {
 		assertThat(config.getSecurityGroup(), is(not(isEmptyOrNullString())));
 		assertThat(config.getSubnetId(), is(not(isEmptyOrNullString())));
 
-		final Map<String, String> sizeMap = config.getEngineSizeMap();
+		final Map<String, String> sizeMap = config.getEngineTypeMap();
 		assertThat(sizeMap, notNullValue());
 		assertThat(sizeMap.values(), hasSize(greaterThan(0)));
 	}

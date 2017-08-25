@@ -4,7 +4,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.checkmarx.engine.manager.EngineProvisioner;
-import com.checkmarx.engine.manager.EngineProvisioner.CxRoles;
+import com.checkmarx.engine.manager.EngineProvisioner.CxRole;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
@@ -65,16 +64,16 @@ public class AwsEc2ClientTests {
 		final String instanceType = "t2.small";
 		//final String instanceType = "m4.large";
 		final String version = "8.5.0-RC3";
-		final CxRoles role = CxRoles.ENGINE;
+		final CxRole role = CxRole.ENGINE;
 		
 		final Map<String, String> tags = AwsEngines.createCxTags(role, version);
 		
 		final Instance instance = ec2Client.launch(name, instanceType, tags);
 		
 		assertNotNull(instance);
-		assertThat(AwsUtils.getName(instance), is(name));
-		assertThat(AwsUtils.getTag(instance, EngineProvisioner.CX_ROLE_TAG), is(role.toString()));
-		assertThat(AwsUtils.getTag(instance, EngineProvisioner.CX_VERSION_TAG), is(version));
+		assertThat(Ec2.getName(instance), is(name));
+		assertThat(Ec2.getTag(instance, EngineProvisioner.CX_ROLE_TAG), is(role.toString()));
+		assertThat(Ec2.getTag(instance, EngineProvisioner.CX_VERSION_TAG), is(version));
 		assertEquals(instanceType, instance.getInstanceType());
 		assertEquals(config.getKeyName(), instance.getKeyName());
 		assertEquals(config.getImageId(), instance.getImageId());
@@ -99,20 +98,21 @@ public class AwsEc2ClientTests {
 		final Instance instance = ec2Client.describe(instanceId);
 		assertThat(instance, notNullValue());
 		//log.debug("{}", AwsUtils.printInstanceDetails(instance, "CxVersion", "CxRole"));
-		assertThat(AwsUtils.getName(instance), is(notNullValue()));
+		assertThat(instance.getInstanceId(), is(instanceId));
+		assertThat(Ec2.getName(instance), is(notNullValue()));
 	}
 	
 	@Test
 	public void testListAllInstances() {
 		log.trace("testListAllInstances()");
 
-		List<Instance> instances = ec2Client.list(null, null);
+		List<Instance> instances = ec2Client.find(null, new String[0]);
 		assertThat(instances, is(notNullValue()));
 		assertThat(instances.isEmpty(), is(false));
 		
 		int i = 0;
 		for(Instance instance : instances) {
-			log.debug("{} : name={}; {}", ++i, AwsUtils.getName(instance), AwsUtils.printInstanceDetails(instance));
+			log.debug("{} : name={}; {}", ++i, Ec2.getName(instance), Ec2.print(instance));
 		}
 	}
 
@@ -120,13 +120,13 @@ public class AwsEc2ClientTests {
 	public void testListInstances() {
 		log.trace("testListInstances()");
 
-		List<Instance> instances = ec2Client.list("cx", Collections.singletonList("manager"));
+		List<Instance> instances = ec2Client.find("cx", "manager");
 		assertThat(instances, is(notNullValue()));
 		assertThat(instances.isEmpty(), is(false));
 		
 		int i = 0;
 		for(Instance instance : instances) {
-			log.debug("{} : name={}; {}", i++, AwsUtils.getName(instance), AwsUtils.printInstanceDetails(instance));
+			log.debug("{} : name={}; {}", i++, Ec2.getName(instance), Ec2.print(instance));
 		}
 	}
 

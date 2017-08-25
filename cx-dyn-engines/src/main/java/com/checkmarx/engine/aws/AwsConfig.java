@@ -19,6 +19,7 @@ public class AwsConfig {
 	private int pollingIntervalSecs = 10;
 	private String securityGroup;
 	private String subnetId;
+	private boolean terminateOnStop;
 	private Map<String, String> engineSizeMap;
 	
 	public boolean isAssignPublicIP() {
@@ -77,7 +78,15 @@ public class AwsConfig {
 		this.subnetId = subnetId.trim();
 	}
 
-	public Map<String, String> getEngineSizeMap() {
+	public boolean isTerminateOnStop() {
+		return terminateOnStop;
+	}
+
+	public void setTerminateOnStop(boolean terminateOnStop) {
+		this.terminateOnStop = terminateOnStop;
+	}
+
+	public Map<String, String> getEngineTypeMap() {
 		return engineSizeMap;
 	}
 
@@ -104,6 +113,7 @@ public class AwsConfig {
 				.add("pollingIntervalSecs", pollingIntervalSecs)
 				.add("securityGroup", securityGroup)
 				.add("subnetId", subnetId)
+				.add("terminateOnStop", terminateOnStop)
 				.toString();
 	}
 

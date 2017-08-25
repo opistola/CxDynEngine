@@ -28,6 +28,7 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TagSpecification;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import com.checkmarx.engine.aws.Ec2.InstanceState;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -40,34 +41,6 @@ import com.google.common.collect.Lists;
  */
 @Component
 public class AwsEc2Client implements AwsComputeClient {
-	
-	public enum InstanceState {
-		PENDING(0),
-		RUNNING(16),
-		SHUTTING_DOWN(32),
-		TERMINATED(48),
-		STOPPING(64),
-		STOPPED(80),
-		UNKNOWN(9999);
-		
-		
-		private int code;
-		public int getCode() {
-			return code;
-		}
-
-		private InstanceState(int code) {
-			this.code = code;
-		}
-		
-		public static InstanceState from(int code) {
-			for (InstanceState state : InstanceState.values()) {
-				if (code == state.code)
-					return state;
-			}
-			return InstanceState.UNKNOWN;
-		}
-	}
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEc2Client.class);
 	
@@ -123,7 +96,7 @@ public class AwsEc2Client implements AwsComputeClient {
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 			
 			log.info("AWS EC2; action=launch; {}; requestId={}; status={}", 
-					AwsUtils.printInstanceDetails(instance), requestId, statusCode);
+					Ec2.print(instance), requestId, statusCode);
 			
 			return instance;
 			
@@ -203,7 +176,7 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
-	public List<Instance> list(String tag, List<String> values) {
+	public List<Instance> find(String tag, String... values) {
 		log.trace("list(): tag={}; values={}", tag, values);
 		
 		final List<Instance> allInstances = Lists.newArrayList();
@@ -244,7 +217,7 @@ public class AwsEc2Client implements AwsComputeClient {
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 			
 			log.info("AWS EC2: action=describe; {}; requestId={}; status={}", 
-					AwsUtils.printInstanceDetails(instance), requestId, statusCode);
+					Ec2.print(instance), requestId, statusCode);
 			
 			return instance;
 		} catch (AmazonClientException ex) {
@@ -253,31 +226,6 @@ public class AwsEc2Client implements AwsComputeClient {
 		}
 	}
 	
-	@Override
-	public boolean isProvisioned(String instanceId) {
-		log.trace("isProvisioned(): instanceId={}", instanceId);
-		
-		final Instance instance = determineStatus(instanceId, null);
-		final InstanceState state = getState(instance);
-		switch (state) {
-			case SHUTTING_DOWN:
-			case TERMINATED:
-			case UNKNOWN:
-				return false;
-			default:
-				return true;
-		}
-	}
-	
-	@Override
-	public boolean isRunning(String instanceId) {
-		log.trace("isRunning(): instanceId={}", instanceId);
-		
-		final Instance instance = determineStatus(instanceId, null);
-		final InstanceState state = getState(instance);
-		return InstanceState.RUNNING.equals(state);
-	}
-
 	/**
 	 * Calls describeInstance until state is not pending, and optionally is not the state
 	 * supplied
@@ -292,7 +240,7 @@ public class AwsEc2Client implements AwsComputeClient {
 		Instance instance = this.describe(instanceId);
 		if (instance == null) return null;
 		
-		InstanceState state = getState(instance); 
+		InstanceState state = Ec2.getState(instance); 
 		while (state.equals(InstanceState.PENDING) || state.equals(whileNotState)) {
 			try {
 				Thread.sleep(config.getPollingIntervalSecs() * 1000);
@@ -307,11 +255,18 @@ public class AwsEc2Client implements AwsComputeClient {
 		return instance;
 	}
 	
-	private InstanceState getState(Instance instance) {
-		return instance == null ? InstanceState.TERMINATED 
-				: InstanceState.from(instance.getState().getCode());
+	@Override
+	public boolean isProvisioned(String instanceId) {
+		final Instance instance = determineStatus(instanceId, null);
+		return Ec2.isProvisioned(instance);
 	}
-	
+
+	@Override
+	public boolean isRunning(String instanceId) {
+		final Instance instance = determineStatus(instanceId, null);
+		return Ec2.isRunning(instance);
+	}
+
 	private Instance validateRunResult(RunInstancesResult result) {
 		if (result == null) return null;
 		

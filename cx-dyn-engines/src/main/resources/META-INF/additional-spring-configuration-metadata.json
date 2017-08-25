@@ -40,16 +40,6 @@
     "description": "A description for 'cx-aws.iamProfile'"
   },
   {
-    "name": "cx-aws.engineSizeMap",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.engineSizeMap'"
-  },
-  {
-    "name": "engine.strategy.single",
-    "type": "java.lang.String",
-    "description": "A description for 'engine.strategy.single'"
-  },
-  {
     "name": "cx-aws.pollingIntervalSecs",
     "type": "java.lang.String",
     "description": "A description for 'cx-aws.pollingIntervalSecs'"
@@ -58,5 +48,25 @@
     "name": "cx-aws.assignPublicIP",
     "type": "java.lang.String",
     "description": "A description for 'cx-aws.assignPublicIP'"
+  },
+  {
+    "name": "cx-aws.cxVersion",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.cxVersion'"
+  },
+  {
+    "name": "cx-aws.terminateOnStop",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.terminateOnStop'"
+  },
+  {
+    "name": "cx-aws.engineTypeMap",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.engineTypeMap.S'"
+  },
+  {
+    "name": "engine.strategy.single",
+    "type": "java.lang.String",
+    "description": "A description for 'engine.strategy.single'"
   }
 ]}
