@@ -5,16 +5,16 @@ import java.net.HttpCookie;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.util.Lists;
-import org.assertj.core.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.Lists;
 
 /**
  * {@link ClientHttpRequestInterceptor} to apply Cx authentication cookies.
@@ -26,7 +26,7 @@ public class CxCookieAuthInterceptor implements ClientHttpRequestInterceptor {
 	
 	private static final Logger log = LoggerFactory.getLogger(CxCookieAuthInterceptor.class);
 
-	//private static final String COOKIE_HEADER = "Cookie";
+	private static final String COOKIE_HEADER = "Cookie";
 	private static final String CX_CSRF_COOKIE = "CXCSRFToken";
 	private static final String CX_SESSION_COOKIE = "cxCookie";
 	
@@ -36,14 +36,15 @@ public class CxCookieAuthInterceptor implements ClientHttpRequestInterceptor {
 
 
 	public CxCookieAuthInterceptor() {
-		log.info("CxCookieAuthInterceptor.ctor(): {}", this);
+		log.info("ctor(): {}", this);
 	}
 
 	public CxCookieAuthInterceptor(String cxSession, String csrfToken) {
-		this.cxSession = Preconditions.checkNotNullOrEmpty(cxSession).toString();
+		//this.cxSession = Preconditions.checkNotNullOrEmpty(cxSession).toString();
+		this.cxSession = cxSession;
 		this.csrfToken = csrfToken;
 		buildAuthCookies();
-		log.info("CxCookieAuthInterceptor.ctor(): {}", this);
+		log.info("ctor(): {}", this);
 	}
 	
 	private void buildAuthCookies() {
@@ -62,10 +63,14 @@ public class CxCookieAuthInterceptor implements ClientHttpRequestInterceptor {
 			throws IOException {
 		log.trace("intercept()");
 		
+		final HttpHeaders headers = request.getHeaders();
 		if (cookies.length() > 0) {
-			//HttpClient automatically adds the cookies, just add the CSRF token
-			//request.getHeaders().add(COOKIE_HEADER, cookies.toString());
-			request.getHeaders().add(CX_CSRF_COOKIE, csrfToken);
+			headers.add(CX_CSRF_COOKIE, csrfToken);
+
+			//Add cookies if HttpClient hasn't already
+			if (!headers.containsKey(COOKIE_HEADER)) {
+				request.getHeaders().add(COOKIE_HEADER, cookies.toString());
+			}
 		}
 		
 		final ClientHttpResponse response =  execution.execute(request, body);

@@ -5,14 +5,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.assertj.core.util.Lists;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.checkmarx.engine.Config;
@@ -22,7 +28,9 @@ import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 import com.checkmarx.engine.rest.model.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 
 @Component
 public class CxRestClient {
@@ -38,20 +46,48 @@ public class CxRestClient {
 	private final int timeoutMillis;
 
 	private final RestTemplate sastClient;
-	private final CxCookieAuthInterceptor authInterceptor;
+	private final RestTemplate engineClient;
 
 	public CxRestClient(RestTemplateBuilder restTemplateBuilder, Config config) {
 		this.config = config;
-		
-		this.authInterceptor = new CxCookieAuthInterceptor();
 		this.timeoutMillis = config.getTimeoutSecs() * 1000;
 		
-		this.sastClient = restTemplateBuilder
+		this.sastClient = buildRestTemplate(restTemplateBuilder);
+		this.engineClient = restTemplateBuilder
 				.setConnectTimeout(timeoutMillis)
-				.additionalInterceptors(this.authInterceptor)
+				.build();
+
+		log.info("ctor(): {}", this);
+	}
+	
+	private RestTemplate buildRestTemplate(RestTemplateBuilder restTemplateBuilder) {
+		return restTemplateBuilder
+				.requestFactory(getClientHttpRequestFactory())
+				.additionalInterceptors(new CxCookieAuthInterceptor())
 				.build();
 	}
 	
+	/**
+	 * Creates a custom HttpClient that:
+	 *  - disables SSL host verification
+	 *  - disables cookie management
+	 *  - sets a custom user agent
+	 */
+	private ClientHttpRequestFactory getClientHttpRequestFactory() {
+		
+		final CloseableHttpClient httpClient = HttpClients.custom()
+	        .setSSLHostnameVerifier(new NoopHostnameVerifier())
+	        .setUserAgent("CxDynamicEngineManager v1.0")
+	        .disableCookieManagement()
+	        .useSystemProperties()
+	        .build();
+		
+	    final HttpComponentsClientHttpRequestFactory clientHttpRequestFactory
+	    	= new HttpComponentsClientHttpRequestFactory(httpClient);
+	    clientHttpRequestFactory.setConnectTimeout(timeoutMillis);
+	    return clientHttpRequestFactory;	
+	}
+
 	private interface Request<R> {
 		public R send();
 	}
@@ -65,7 +101,7 @@ public class CxRestClient {
 			return result;
 		} catch (HttpClientErrorException e) {
 			final ErrorResponse error = unmarshallError(e.getResponseBodyAsString());
-			log.warn("Cx rest call failed: request={}; {}", operation, error);
+			log.warn("Cx rest call failed: request={}; status={}; {}", operation, e.getRawStatusCode(), error);
 			throw e;
 		} finally {
 			log.debug("Cx api call; request={}; success={}; elapsed={}", 
@@ -168,16 +204,46 @@ public class CxRestClient {
 		return Arrays.asList(scanRequests);
 	}
 	
+	public boolean pingEngine(String host) {
+		log.trace("pingEngine(): host={}", host);
+		
+		final String url = buildEngineServerUrl(host);
+		
+		try {
+			final String payload = execute("pingEngine", () -> {
+				final ResponseEntity<String> response = engineClient.getForEntity(url, String.class);
+				return response.getBody();
+			});
+			log.debug("pingEngine: response={}", payload.substring(0, 120));
+			
+			return true;
+			
+		} catch (RestClientException ex) {
+			log.debug("pingEngine failed : message={}", ex.getMessage());
+			return false;
+		}
+	}
+
+	public String buildEngineServerUrl(String host) {
+		return host + config.getCxEngineUrlPath();
+	}
+	
 	private String buildEngineUrl(long id) {
 		return buildEngineUrl() + "/" + id;
 	}
 	
 	private String buildEngineUrl() {
-		return config.getCxUrl() + ENGINES_API_URL;
+		return config.getRestUrl() + ENGINES_API_URL;
 	}
 	
 	private String buildUrl(String url) {
-		return config.getCxUrl() + url;
+		return config.getRestUrl() + url;
 	}
 
+	@Override
+	public String toString() {
+		return MoreObjects.toStringHelper(this)
+				.add("config", config)
+				.toString();
+	}
 }

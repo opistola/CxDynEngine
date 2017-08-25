@@ -26,11 +26,11 @@ eclipse {
 
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
+description = 'Manages Dynamic Engines for Checkmarx SAST solution'
 
 repositories {
 	mavenCentral()
 }
-
 
 dependencies {
     compile(
@@ -49,5 +49,12 @@ dependencyManagement {
     imports {
         mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Camden.SR3'
         mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.159'
+    }
+}
+
+jar {
+    manifest {
+        attributes("Implementation-Title": "Checkmarx Dynamic Engine Manager",
+                   "Implementation-Version": version)
     }
 }

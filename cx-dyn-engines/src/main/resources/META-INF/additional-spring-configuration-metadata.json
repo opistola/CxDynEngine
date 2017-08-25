@@ -1,0 +1,62 @@
+{"properties": [
+  {
+    "name": "cx.userName",
+    "type": "java.lang.String",
+    "description": "A description for 'cx.userName'"
+  },
+  {
+    "name": "cx.password",
+    "type": "java.lang.String",
+    "description": "A description for 'cx.password'"
+  },
+  {
+    "name": "cx.restUrl",
+    "type": "java.lang.String",
+    "description": "A description for 'cx.restUrl'"
+  },
+  {
+    "name": "cx-aws.imageId",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.imageId'"
+  },
+  {
+    "name": "cx-aws.subnetId",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.subnetId'"
+  },
+  {
+    "name": "cx-aws.securityGroup",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.securityGroup'"
+  },
+  {
+    "name": "cx-aws.keyName",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.keyName'"
+  },
+  {
+    "name": "cx-aws.iamProfile",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.iamProfile'"
+  },
+  {
+    "name": "cx-aws.engineSizeMap",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.engineSizeMap'"
+  },
+  {
+    "name": "engine.strategy.single",
+    "type": "java.lang.String",
+    "description": "A description for 'engine.strategy.single'"
+  },
+  {
+    "name": "cx-aws.pollingIntervalSecs",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.pollingIntervalSecs'"
+  },
+  {
+    "name": "cx-aws.assignPublicIP",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws.assignPublicIP'"
+  }
+]}

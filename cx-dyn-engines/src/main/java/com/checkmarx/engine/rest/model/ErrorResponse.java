@@ -10,6 +10,7 @@ public class ErrorResponse {
 	
 	private Integer messageCode;
 	private String messageDetails;
+	private String message;
 	
 	public ErrorResponse() {
 		// default .ctor for unmarshalling
@@ -18,6 +19,10 @@ public class ErrorResponse {
 	public ErrorResponse(Integer messageCode, String messageDetails) {
 		this.messageCode = messageCode;
 		this.messageDetails = messageDetails;
+	}
+
+	public String getMessage() {
+		return message;
 	}
 
 	public Integer getMessageCode() {
@@ -31,8 +36,10 @@ public class ErrorResponse {
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
+				.add("message", message)
 				.add("messageCode", messageCode)
 				.add("messageDetails", messageDetails)
+				.omitNullValues()
 				.toString();
 	}
 

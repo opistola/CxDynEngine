@@ -2,10 +2,12 @@ package com.checkmarx.engine.rest;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -18,7 +20,9 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -28,6 +32,7 @@ import com.checkmarx.engine.rest.model.ScanRequest;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@TestPropertySource("/application-test.properties")
 public class CxRestClientTests {
 	
 	private static final Logger log = LoggerFactory.getLogger(CxRestClientTests.class);
@@ -35,11 +40,17 @@ public class CxRestClientTests {
 	@Autowired
 	private CxRestClient sastClient;
 	
+	@Value("${cx.test-engine-url}")
+	private String engineUrl;
+	
 	private final List<Long> engineIds = Lists.newArrayList();
 
 	@Before
 	public void setUp() throws Exception {
 		assertThat(sastClient, notNullValue());
+		assertThat(engineUrl, is(not(isEmptyOrNullString())));
+		log.debug("engineUrl={}", engineUrl);
+
 		assertThat(login(), is(true));
 	}
 	
@@ -148,6 +159,14 @@ public class CxRestClientTests {
 		}
 	}
 	
+	@Test
+	public void testPingEngine() {
+		log.trace("testPingEngine()");
+
+		assertThat(sastClient.pingEngine(engineUrl), is(true));
+	}
+	
+
 	private EngineServer registerEngine(EngineServer engine) {
 		return sastClient.registerEngine(engine);
 	}

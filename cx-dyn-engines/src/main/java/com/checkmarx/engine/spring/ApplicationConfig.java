@@ -3,16 +3,17 @@ package com.checkmarx.engine.spring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.checkmarx.engine.Config;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 @Configuration
 public class ApplicationConfig {
 
+	/*
 	@Bean
 	public Config config() {
 		return new Config();
 	}
+	*/
 	
 	@Bean
 	public JodaModule jacksonJodaModule() {

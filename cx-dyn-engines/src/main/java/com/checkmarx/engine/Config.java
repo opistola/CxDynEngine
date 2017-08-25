@@ -1,21 +1,21 @@
 package com.checkmarx.engine;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 import com.google.common.base.MoreObjects;
 
+@Component
 @ConfigurationProperties(prefix="cx")
 public class Config {
 	
 	private String userName;
-	
 	private String password;
-	
-	private String cxUrl;
-	
+	private String restUrl;
 	private int timeoutSecs = 20;
+	private String userAgent = "CxDynamicEngineManager";
 	
-	private String cxEngineUrlPath = "/CxSourceAnalyzerEngineWCF/CxEngineWebServices.svc";
+	private final String cxEngineUrlPath = "/CxSourceAnalyzerEngineWCF/CxEngineWebServices.svc";
 		
 	public String getUserName() {
 		return userName;
@@ -33,12 +33,12 @@ public class Config {
 		this.password = password;
 	}
 
-	public String getCxUrl() {
-		return cxUrl;
+	public String getRestUrl() {
+		return restUrl;
 	}
 
-	public void setUrl(String url) {
-		this.cxUrl = url;
+	public void setRestUrl(String url) {
+		this.restUrl = url;
 	}
 
 	public int getTimeoutSecs() {
@@ -53,17 +53,22 @@ public class Config {
 		return cxEngineUrlPath;
 	}
 
-	public void setCxEngineUrlPath(String cxEngineUrlPath) {
-		this.cxEngineUrlPath = cxEngineUrlPath;
+	public String getUserAgent() {
+		return userAgent;
+	}
+
+	public void setUserAgent(String userAgent) {
+		this.userAgent = userAgent;
 	}
 
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("userName", userName)
-				.add("cxUrl", cxUrl)
+				.add("restUrl", restUrl)
 				.add("timeoutSecs", timeoutSecs)
-				.add("cxEngineUrlPath", getCxEngineUrlPath())
+				.add("cxEngineUrlPath", cxEngineUrlPath)
+				.add("userAgent", userAgent)
 				.toString();
 	}
 
