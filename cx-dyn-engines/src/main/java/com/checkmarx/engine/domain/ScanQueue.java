@@ -9,12 +9,10 @@ import com.google.common.base.MoreObjects;
 public class ScanQueue {
 	
 	private final int capacity;
-	private final ScanSize size;
 	private final BlockingQueue<ScanRequest> queue;
 	
-	public ScanQueue(int capacity, ScanSize size) {
+	public ScanQueue(int capacity) {
 		this.capacity = capacity;
-		this.size = size;
 		this.queue = new ArrayBlockingQueue<ScanRequest>(capacity);
 	}
 
@@ -22,15 +20,10 @@ public class ScanQueue {
 		return queue;
 	}
 
-	public ScanSize getSize() {
-		return size;
-	}
-	
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
-				.add("capcity", capacity)
-				.add("scanSize", size)
+				.add("capacity", capacity)
 				.add("queuedCount", queue.size())
 				.toString();
 	}

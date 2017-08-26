@@ -20,7 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.checkmarx.engine.manager.EngineProvisioner;
-import com.checkmarx.engine.manager.EngineProvisioner.CxRole;
+import com.checkmarx.engine.manager.EngineProvisioner.CxServerRole;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
@@ -64,7 +64,7 @@ public class AwsEc2ClientTests {
 		final String instanceType = "t2.small";
 		//final String instanceType = "m4.large";
 		final String version = "8.5.0-RC3";
-		final CxRole role = CxRole.ENGINE;
+		final CxServerRole role = CxServerRole.ENGINE;
 		
 		final Map<String, String> tags = AwsEngines.createCxTags(role, version);
 		

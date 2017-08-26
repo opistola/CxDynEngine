@@ -20,7 +20,7 @@ public class AwsConfig {
 	private String securityGroup;
 	private String subnetId;
 	private boolean terminateOnStop;
-	private Map<String, String> engineSizeMap;
+	private Map<String, String> engineTypeMap;
 	
 	public boolean isAssignPublicIP() {
 		return assignPublicIP;
@@ -87,11 +87,11 @@ public class AwsConfig {
 	}
 
 	public Map<String, String> getEngineTypeMap() {
-		return engineSizeMap;
+		return engineTypeMap;
 	}
 
-	public void setEngineSizeMap(Map<String, String> engineSizeMap) {
-		this.engineSizeMap = engineSizeMap;
+	public void setEngineTypeMap(Map<String, String> engineSizeMap) {
+		this.engineTypeMap = engineSizeMap;
 	}
 
 	public int getPollingIntervalSecs() {

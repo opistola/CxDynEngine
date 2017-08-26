@@ -3,8 +3,12 @@
  */
 package com.checkmarx.engine.domain;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.*;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,6 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.checkmarx.engine.aws.AwsConstants;
+import com.checkmarx.engine.domain.DynamicEngine.State;
+import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
+import com.google.common.collect.Iterables;
 
 /**
  * @author rjgey
@@ -34,9 +41,9 @@ public class EnginePoolTests {
 		log.trace("setup()");
 
 		pool = new DefaultEnginePoolBuilder("cx-engine", AwsConstants.BILLING_INTERVAL_SECS)
-			.addSize(SMALL, 3)
-			.addSize(MEDIUM, 3)
-			.addSize(LARGE, 3)
+			.addEntry(new EnginePoolEntry(SMALL, 3))
+			.addEntry(new EnginePoolEntry(MEDIUM, 3))
+			.addEntry(new EnginePoolEntry(LARGE, 3))
 			.build();
 	}
 
@@ -47,10 +54,12 @@ public class EnginePoolTests {
 		pool.logEngines();
 		log.debug("{}", pool);
 
-		assertEquals(3, pool.getAllEngines().size());
-		assertEquals(3, pool.getAllEngines().get(SMALL.getName()).size());
-		assertEquals(3, pool.getAllEngines().get(MEDIUM.getName()).size());
-		assertEquals(3, pool.getAllEngines().get(LARGE.getName()).size());
+		assertEquals(9, pool.getAllEnginesByName().size());
+		
+		assertEquals(3, pool.getAllEnginesBySize().size());
+		assertEquals(3, pool.getAllEnginesBySize().get(SMALL.getName()).size());
+		assertEquals(3, pool.getAllEnginesBySize().get(MEDIUM.getName()).size());
+		assertEquals(3, pool.getAllEnginesBySize().get(LARGE.getName()).size());
 
 		assertEquals(3, pool.getUnprovisionedEngines().size());
 		assertEquals(3, pool.getUnprovisionedEngines().get(SMALL.getName()).size());
@@ -73,23 +82,72 @@ public class EnginePoolTests {
 		assertEquals(0, pool.getIdleEngines().get(LARGE.getName()).size());
 	}
 	
+	@Test
+	public void testAllocate() {
+		log.trace("testAllocate()");
+		
+		DynamicEngine engine;
+
+		engine = pool.allocateEngine(SMALL, State.IDLE);
+		assertThat(engine, is(nullValue()));
+		engine = pool.allocateEngine(SMALL, State.EXPIRING);
+		assertThat(engine, is(nullValue()));
+		engine = pool.allocateEngine(SMALL, State.SCANNING);
+		assertThat(engine, is(nullValue()));
+
+		engine = pool.allocateEngine(SMALL, State.UNPROVISIONED);
+		assertThat(engine, is(notNullValue()));
+		pool.changeState(engine, State.IDLE);
+		engine = pool.allocateEngine(SMALL, State.UNPROVISIONED);
+		assertThat(engine, is(notNullValue()));
+		pool.changeState(engine, State.IDLE);
+		engine = pool.allocateEngine(SMALL, State.UNPROVISIONED);
+		assertThat(engine, is(notNullValue()));
+		pool.changeState(engine, State.IDLE);
+		engine = pool.allocateEngine(SMALL, State.UNPROVISIONED);
+		assertThat(engine, is(nullValue()));
+	}
+	
 	
 	@Test
 	public void testChangeState() throws InterruptedException {
 		log.trace("testChangeState()");
 		
-		DynamicEngine engine = pool.getUnprovisionedEngines().get(SMALL.getName()).get(0);
+		final DynamicEngine engine = Iterables.getFirst(pool.getUnprovisionedEngines().get(SMALL.getName()), null);
 		String size = engine.getSize();
 		
-		pool.changeState(engine, DynamicEngine.State.SCANNING);
+		pool.changeState(engine, State.SCANNING);
 		assertEquals(1, pool.getActiveEngines().get(size).size());
 		assertEquals(2, pool.getUnprovisionedEngines().get(size).size());
-		assertEquals(DynamicEngine.State.SCANNING, engine.getState());
+		assertEquals(State.SCANNING, engine.getState());
 		
 		Thread.sleep(100);
 		assertTrue(engine.getElapsedTime().getMillis() >= 100);
 
 		pool.logEngines();
+	}
+
+	@Test
+	public void testReplaceEngine() {
+		log.trace("testReplaceEngine()");
+		
+		final DynamicEngine e = 
+				Iterables.getFirst(pool.getUnprovisionedEngines().get(SMALL.getName()), null);
+		final String name = e.getName();
+		
+		final DynamicEngine newEngine = new DynamicEngine(name, e.getSize(), AwsConstants.BILLING_INTERVAL_SECS);
+		newEngine.setState(State.IDLE);
+		newEngine.setHost(new Host(name, "ip", "url", null, DateTime.now()));
+		assertEquals(newEngine, e);
+		
+		final DynamicEngine oldEngine = pool.replaceEngine(newEngine);
+		log.debug("old: {}", oldEngine);
+		log.debug("new: {}", newEngine);
+
+		assertEquals(e, oldEngine);
+		assertEquals(newEngine, pool.getEngineByName(name));
+		assertNotEquals(newEngine.getState(), oldEngine.getState());
+		assertNotEquals(newEngine.getHost(), oldEngine.getHost());
 	}
 
 	@Test
@@ -105,5 +163,5 @@ public class EnginePoolTests {
 		assertEquals(LARGE, pool.calcEngineSize(999999999));
 		assertNull(pool.calcEngineSize(100000000000L));
 	}
-
+	
 }

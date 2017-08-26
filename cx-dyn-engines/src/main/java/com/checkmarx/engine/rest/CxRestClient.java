@@ -121,6 +121,10 @@ public class CxRestClient {
 		return new ErrorResponse(-1, content);
 	}
 
+	public boolean login() {
+		return login(new Login(config.getUserName(), config.getPassword()));
+	}
+	
 	public boolean login(Login login) {
 		log.trace("login(): {}", login);
 

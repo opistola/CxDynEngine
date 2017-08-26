@@ -21,7 +21,7 @@ public interface EngineProvisioner {
 	 * Checkmarx server roles, used for compute instance tagging.
 	 */
 	//FIXME: move to better location
-	public enum CxRole {
+	public enum CxServerRole {
 		ENGINE,
 		MANAGER
 	}
@@ -54,10 +54,18 @@ public interface EngineProvisioner {
 	
 
 	/**
-	 * Stops and terminates the supplied dynamic engine.
+	 * Stops the supplied dynamic engine.  Underlying implementation may terminate the engine.
 	 * 
 	 * @param engine to stop
 	 */
 	void stop(DynamicEngine engine);
+
+	/**
+	 * Stops the supplied dynamic engine. Underlying implementation may terminate the engine.
+	 * 
+	 * @param engine to stop
+	 * @param forceTerminate if true, always terminates the engine
+	 */
+	void stop(DynamicEngine engine, boolean forceTerminate);
 
 }

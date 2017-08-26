@@ -1,12 +1,11 @@
 package com.checkmarx.engine.domain;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
+import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 import com.google.common.collect.Sets;
 
 //@Component
@@ -14,7 +13,7 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultEnginePoolBuilder.class);
 
-	private final Map<ScanSize, Integer> sizeMap = Maps.newHashMap();
+	private final Set<EnginePoolEntry> entries = Sets.newHashSet();
 	private final Set<DynamicEngine> engines = Sets.newHashSet();
 	
 	private final String engineNamePrefix;
@@ -26,10 +25,15 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 	}
 
 	@Override
-	public EnginePoolBuilder addSize(ScanSize size, int count) {
-		log.trace("addSize(): {}; count={}", size, count);
-		
-		sizeMap.put(size, count);
+	public EnginePoolBuilder addEntry(EnginePoolEntry entry) {
+		log.trace("addEntry(): {}", entry);
+		entries.add(entry);
+		return this;
+	}
+	
+	@Override
+	public EnginePoolBuilder addEntry(ScanSize size, int count) {
+		entries.add(new EnginePoolEntry(size, count));
 		return this;
 	}
 
@@ -37,8 +41,8 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 	public EnginePool build() {
 		log.trace("build()");
 		engines.clear();
-		sizeMap.forEach((size,count) -> addEngines(size, count));
-		return new EnginePool(sizeMap.keySet(), engines);
+		entries.forEach((entry) -> addEngines(entry.getScanSize(), entry.getCount()));
+		return new EnginePool(entries, engines);
 	}
 
 	private void addEngines(ScanSize size, int count) {
@@ -49,4 +53,5 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 			log.info("Adding engine to pool; name={}", name);
 		}
 	}
+
 }

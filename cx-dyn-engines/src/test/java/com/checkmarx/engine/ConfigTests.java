@@ -38,9 +38,11 @@ public class ConfigTests {
 		
 		assertThat(config.getCxEngineUrlPath(), is(not(isEmptyOrNullString())));
 		assertThat(config.getPassword(), is(not(isEmptyOrNullString())));
-		assertThat(config.getTimeoutSecs(), is(greaterThan(0)));
+		assertThat(config.getQueueCapacity(), is(greaterThan(0)));
+		assertThat(config.getQueueIntervalSecs(), is(greaterThan(0)));
 		assertThat(config.getRestUrl(), is(not(isEmptyOrNullString())));
 		assertThat(config.getUserName(), is(not(isEmptyOrNullString())));
+		assertThat(config.getTimeoutSecs(), is(greaterThan(0)));
 	}
 	
 }

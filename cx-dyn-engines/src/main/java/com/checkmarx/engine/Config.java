@@ -9,14 +9,18 @@ import com.google.common.base.MoreObjects;
 @ConfigurationProperties(prefix="cx")
 public class Config {
 	
+	private final String cxEngineUrlPath = "/CxSourceAnalyzerEngineWCF/CxEngineWebServices.svc";
+	
 	private String userName;
 	private String password;
+	private String cxEnginePrefix = "**";
+	private String enginePoolPrefix = "cx-engine";
+	private int queueCapacity = 100;
+	private int queueIntervalSecs = 20;
 	private String restUrl;
 	private int timeoutSecs = 20;
 	private String userAgent = "CxDynamicEngineManager";
 	
-	private final String cxEngineUrlPath = "/CxSourceAnalyzerEngineWCF/CxEngineWebServices.svc";
-		
 	public String getUserName() {
 		return userName;
 	}
@@ -31,6 +35,38 @@ public class Config {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public String getCxEnginePrefix() {
+		return cxEnginePrefix;
+	}
+
+	public void setCxEnginePrefix(String cxEnginePrefix) {
+		this.cxEnginePrefix = cxEnginePrefix;
+	}
+
+	public String getEnginePoolPrefix() {
+		return enginePoolPrefix;
+	}
+
+	public void setEnginePoolPrefix(String enginePoolPrefix) {
+		this.enginePoolPrefix = enginePoolPrefix;
+	}
+
+	public int getQueueCapacity() {
+		return queueCapacity;
+	}
+
+	public void setQueueCapacity(int queueCapacity) {
+		this.queueCapacity = queueCapacity;
+	}
+
+	public int getQueueIntervalSecs() {
+		return queueIntervalSecs;
+	}
+	
+	public void setQueueIntervalSecs(int queueIntervalSecs) {
+		this.queueIntervalSecs = queueIntervalSecs;
 	}
 
 	public String getRestUrl() {
@@ -65,9 +101,13 @@ public class Config {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("userName", userName)
+				.add("cxEnginePrefix", cxEnginePrefix)
+				.add("cxEngineUrlPath", cxEngineUrlPath)
+				.add("enginePoolPrefix", enginePoolPrefix)
+				.add("queueCapacity", queueCapacity)
+				.add("queueIntervalSecs", queueIntervalSecs)
 				.add("restUrl", restUrl)
 				.add("timeoutSecs", timeoutSecs)
-				.add("cxEngineUrlPath", cxEngineUrlPath)
 				.add("userAgent", userAgent)
 				.toString();
 	}

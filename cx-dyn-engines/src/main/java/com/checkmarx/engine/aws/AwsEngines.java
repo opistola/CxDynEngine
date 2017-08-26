@@ -56,7 +56,7 @@ public class AwsEngines implements EngineProvisioner {
 		log.info("ctor(): {}", this);
 	}
 	
-	public static Map<String, String> createCxTags(CxRole role, String version) {
+	public static Map<String, String> createCxTags(CxServerRole role, String version) {
 		log.trace("createCxTags(): role={}; version={}", role, version);
 		
 		final Map<String, String> tags = Maps.newHashMap();
@@ -67,7 +67,7 @@ public class AwsEngines implements EngineProvisioner {
 	
 	private Map<String, String> createEngineTags(String size) {
 		log.trace("createEngineTags(): size={}", size);
-		final Map<String, String> tags = createCxTags(CxRole.ENGINE, config.getCxVersion());
+		final Map<String, String> tags = createCxTags(CxServerRole.ENGINE, config.getCxVersion());
 		tags.put(CX_SIZE_TAG, size);
 		return tags;
 	}
@@ -77,7 +77,7 @@ public class AwsEngines implements EngineProvisioner {
 		
 		final Stopwatch timer = Stopwatch.createStarted(); 
 		try {
-			final List<Instance> engines = ec2Client.find(CX_ROLE_TAG, CxRole.ENGINE.toString());
+			final List<Instance> engines = ec2Client.find(CX_ROLE_TAG, CxServerRole.ENGINE.toString());
 			engines.forEach((instance) -> {
 				if (Ec2.isTerminated(instance)) {
 					log.info("Terminated engine found: {}", Ec2.print(instance));
@@ -166,13 +166,14 @@ public class AwsEngines implements EngineProvisioner {
 			} else if (!ec2Client.isRunning(instanceId)) {
 				ec2Client.start(instanceId);
 			} else {
-				engine.setHost(createHost(name, instance));
 			}
+			final Host host = createHost(name, instance);
+			engine.setHost(host);
 			
 			if (waitForSpinup) {
-				waitForSpinup(instance);
+				waitForSpinup(host);
 			}
-			engine.setHost(createHost(name, instance));
+			//engine.setHost(createHost(name, instance));
 			engine.setState(State.IDLE);
 			
 		} finally {
@@ -183,6 +184,11 @@ public class AwsEngines implements EngineProvisioner {
 
 	@Override
 	public void stop(DynamicEngine engine) {
+		stop(engine, false);
+	}
+	
+	@Override
+	public void stop(DynamicEngine engine, boolean forceTerminate) {
 		log.trace("stop() : {}", engine);
 
 		final String name = engine.getName();
@@ -193,7 +199,7 @@ public class AwsEngines implements EngineProvisioner {
 		}
 		
 		final String instanceId = instance.getInstanceId();
-		if (config.isTerminateOnStop()) {
+		if (config.isTerminateOnStop() || forceTerminate) {
 			ec2Client.terminate(instanceId);
 			engine.setState(State.UNPROVISIONED);
 		} else {
@@ -215,32 +221,36 @@ public class AwsEngines implements EngineProvisioner {
 
 	private Host createHost(final String name, final Instance instance) {
 		final String ip = getIpAddress(instance);
-		return new Host(name, ip, buildUrl(ip));
+		final String extIp = instance.getPublicIpAddress();
+		final DateTime launchTime = new DateTime(instance.getLaunchTime());
+		return new Host(name, ip, buildUrl(ip), buildUrl(extIp), launchTime);
 	}
 
-	private void waitForSpinup(Instance instance) {
-		log.trace("waitForSpinup() : instance={}", instance);
+	private void waitForSpinup(Host host) {
+		log.trace("waitForSpinup() : host={}", host);
 		
-		final String host = "http://" + getIpAddress(instance);
-		while (!cxClient.pingEngine(host)) {
+		String server = host.getExternalUrl();
+		if (StringUtils.isNullOrEmpty(server))
+			server = host.getUrl();
+		while (!cxClient.pingEngine(server)) {
 			try {
 				Thread.sleep(pollingMillis);
 			} catch (InterruptedException e) {
-				final String msg = String.format("Interrupted while waiting for AWS instanceId=%1s", 
-						instance.getInstanceId());
+				final String msg = String.format("Interrupted while waiting for AWS; instance=%1s", 
+						host.getName());
 				throw new RuntimeException(msg, e);
 			}
 		}
 	}
 	
 	private String getIpAddress(Instance instance)  {
-		String ip = instance.getPublicIpAddress();
+		String ip = instance.getPrivateIpAddress();
 		final String instanceId = instance.getInstanceId();
 		while (ip == null) {
 			try {
 				Thread.sleep(pollingMillis);
 				Instance newInstance = ec2Client.describe(instanceId);
-				ip = newInstance.getPublicIpAddress();
+				ip = newInstance.getPrivateIpAddress();
 			} catch (InterruptedException e) {
 				final String msg = String.format("Interrupted while waiting for AWS instanceId=%1s", 
 						instance.getInstanceId());
@@ -251,6 +261,7 @@ public class AwsEngines implements EngineProvisioner {
 	}
 
 	private String buildUrl(String ip) {
+		if (StringUtils.isNullOrEmpty(ip)) return null;
 		final String host = "http://" + ip;
 		return cxClient.buildEngineServerUrl(host);
 	}

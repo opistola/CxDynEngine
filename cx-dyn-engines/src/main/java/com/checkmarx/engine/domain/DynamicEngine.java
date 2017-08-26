@@ -4,6 +4,7 @@
 package com.checkmarx.engine.domain;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -38,6 +39,7 @@ public class DynamicEngine {
 	private Map<State, Duration> elapsedTimes = Maps.newConcurrentMap();
 	private final int expireDurationSecs;
 	private DateTime launchTime;
+	private String scanRunId;
 	private EnginePool enginePool;
 
 	public void setEnginePool(EnginePool enginePool) {
@@ -92,7 +94,7 @@ public class DynamicEngine {
 	}
 	
 	public String getUrl() {
-		return host != null ? host.getUrl() : null;
+		return host == null ? null : host.getUrl();
 	}
 	
 	public DateTime getCurrentStateTime() {
@@ -124,6 +126,9 @@ public class DynamicEngine {
 		// if current state is UNPROVISIONED, set launch time
 		if (curState.equals(State.UNPROVISIONED)) {
 			launchTime = DateTime.now();
+			if (host != null && host.getLaunchTime() != null) {
+				launchTime = host.getLaunchTime();
+			}
 			timeToExpire = launchTime.plusSeconds(this.expireDurationSecs);
 		}
 
@@ -187,6 +192,30 @@ public class DynamicEngine {
 		return sb.toString().replaceAll(", $", "");
 	}
 
+	public String getScanRunId() {
+		return scanRunId;
+	}
+
+	public void setScanRunId(String scanRunId) {
+		this.scanRunId = scanRunId;
+	}
+
+	// name and size are only immutable properties
+	@Override
+	public int hashCode() {
+		return Objects.hash(name, size);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		final DynamicEngine other = (DynamicEngine) obj;
+		return Objects.equals(this.name, other.name)
+				&& Objects.equals(this.size, other.size);
+	}
+
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
@@ -199,9 +228,11 @@ public class DynamicEngine {
 				.add("currentStateTime", currentStateTime)
 				.add("expireDurationSecs", expireDurationSecs)
 				.add("timeToExpire", timeToExpire)
+				.add("scanRunId", scanRunId)
 				.add("host", host)
 				.add("elapsedTimes", "[" + printElapsedTimes() + "]")
 				//.omitNullValues()
 				.toString();
 	}
+	
 }
