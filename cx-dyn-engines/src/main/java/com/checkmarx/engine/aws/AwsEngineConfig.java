@@ -13,14 +13,14 @@ import com.google.common.base.MoreObjects;
 public class AwsEngineConfig {
 
 	private boolean assignPublicIP;
+	private int cxEngineTimeoutSec=300;
 	private String cxVersion;
 	private String iamProfile;
 	private String imageId;
 	private String keyName;
+	private int launchTimeoutSec=60;
 	private int monitorPollingIntervalSecs = 10;
-	private int monitorTimeoutSec=300;
 	private String securityGroup;
-	private int statusTimeoutSec=60;
 	private String subnetId;
 	private boolean terminateOnStop;
 	private boolean usePublicUrlForCx = false;
@@ -29,8 +29,8 @@ public class AwsEngineConfig {
 	
 	/**
 	 * Maps EngineSize to EC2 instanceType; 
-	 * key=size (name), 
-	 * value=ec2 instance type (e.g. m4.large)
+	 * 	key=size (name), 
+	 * 	value=ec2 instance type (e.g. m4.large)
 	 */
 	private Map<String, String> engineSizeMap;
 	
@@ -40,6 +40,17 @@ public class AwsEngineConfig {
 
 	public void setAssignPublicIP(boolean assignPublicIP) {
 		this.assignPublicIP = assignPublicIP;
+	}
+
+	/**
+	 * Timeout for CxEngine response after EC2 instance enters Running state
+	 */
+	public int getCxEngineTimeoutSec() {
+		return cxEngineTimeoutSec;
+	}
+
+	public void setCxEngineTimeoutSec(int cxEngineTimeoutSec) {
+		this.cxEngineTimeoutSec = cxEngineTimeoutSec;
 	}
 
 	public String getCxVersion() {
@@ -74,16 +85,11 @@ public class AwsEngineConfig {
 		this.keyName = keyName;
 	}
 
+	/**
+	 * Polling interval for monitoring instance/engine launch/startup 
+	 */
 	public int getMonitorPollingIntervalSecs() {
 		return monitorPollingIntervalSecs;
-	}
-
-	public int getMonitorTimeoutSec() {
-		return monitorTimeoutSec;
-	}
-
-	public void setMonitorTimeoutSec(int monitorTimeoutSec) {
-		this.monitorTimeoutSec = monitorTimeoutSec;
 	}
 
 	public void setMonitorPollingIntervalSecs(int monitorPollingIntervalSecs) {
@@ -98,12 +104,15 @@ public class AwsEngineConfig {
 		this.securityGroup = securityGroup;
 	}
 
-	public int getStatusTimeoutSec() {
-		return statusTimeoutSec;
+	/**
+	 * Timeout to wait for Running state after EC2 instance launch
+	 */
+	public int getLaunchTimeoutSec() {
+		return launchTimeoutSec;
 	}
 
-	public void setStatusTimeoutSec(int statusTimeoutSec) {
-		this.statusTimeoutSec = statusTimeoutSec;
+	public void setLaunchTimeoutSec(int launchTimeoutSec) {
+		this.launchTimeoutSec = launchTimeoutSec;
 	}
 
 	public String getSubnetId() {
@@ -162,14 +171,14 @@ public class AwsEngineConfig {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("assignPublicIP", assignPublicIP)
+				.add("cxEngineTimeoutSec", cxEngineTimeoutSec)
 				.add("cxVersion", cxVersion)
 				.add("iamProfile", iamProfile)
 				.add("imageId", imageId)
 				.add("keyName", keyName)
 				.add("monitorPollingIntervalSecs", monitorPollingIntervalSecs)
-				.add("monitorTimeoutSec", monitorTimeoutSec)
 				.add("securityGroup", securityGroup)
-				.add("statusTimeoutSec", statusTimeoutSec)
+				.add("launchTimeoutSec", launchTimeoutSec)
 				.add("subnetId", subnetId)
 				.add("terminateOnStop", terminateOnStop)
 				.add("usePublicUrlForCx", usePublicUrlForCx)

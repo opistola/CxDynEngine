@@ -18,15 +18,15 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T> the task return type
  */
-public class TimedTask<T> {
+public class TimeoutTask<T> {
 	
-	private static final Logger log = LoggerFactory.getLogger(TimedTask.class);
+	private static final Logger log = LoggerFactory.getLogger(TimeoutTask.class);
 
 	private final String taskName;
 	private final int timeout;
 	private final TimeUnit timeUnit;
 	
-	public TimedTask(String taskName, int timeout, TimeUnit timeUnit) {
+	public TimeoutTask(String taskName, int timeout, TimeUnit timeUnit) {
 		this.taskName = taskName;
 		this.timeout = timeout;
 		this.timeUnit = timeUnit;

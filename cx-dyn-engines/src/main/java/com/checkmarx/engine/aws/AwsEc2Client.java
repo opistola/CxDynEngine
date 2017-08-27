@@ -31,8 +31,9 @@ import com.amazonaws.services.ec2.model.TagSpecification;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.checkmarx.engine.aws.Ec2.InstanceState;
-import com.checkmarx.engine.utils.TimedTask;
+import com.checkmarx.engine.utils.TimeoutTask;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
@@ -66,51 +67,59 @@ public class AwsEc2Client implements AwsComputeClient {
 	public Instance launch(String name, String instanceType, Map<String,String> tags) {
 		log.trace("launch(): name={}; instanceType={}", name, instanceType);
 		
+		Instance instance = null;
+		String requestId = null;
+		boolean success = false;
+		final Stopwatch timer = Stopwatch.createStarted();
 		try {
-			final TagSpecification tagSpec = createTagSpec(name, tags);
-			
-			final IamInstanceProfileSpecification profile = new IamInstanceProfileSpecification();
-			profile.withName(config.getIamProfile());
-			
-			final InstanceNetworkInterfaceSpecification nic = new InstanceNetworkInterfaceSpecification();
-			nic.withDeviceIndex(0)
-				.withSubnetId(config.getSubnetId())
-				.withGroups(config.getSecurityGroup())
-				.withAssociatePublicIpAddress(config.isAssignPublicIP());
 
-			final RunInstancesRequest runRequest = new RunInstancesRequest();
-			runRequest.withImageId(config.getImageId())
-				.withInstanceType(instanceType)
-				.withKeyName(config.getKeyName())
-				.withMinCount(1)
-				.withMaxCount(1)
-				//.withSecurityGroupIds(config.getSecurityGroup())
-				//.withSubnetId(config.getSubnetId())
-				.withNetworkInterfaces(nic)
-				.withIamInstanceProfile(profile)
-				.withTagSpecifications(tagSpec)
-				;
-			
+			final RunInstancesRequest runRequest = createRunRequest(name, instanceType, tags);
 			RunInstancesResult result = client.runInstances(runRequest);
-			
-			Instance instance = validateRunResult(result);
+			requestId = result.getSdkResponseMetadata().getRequestId();
+			instance = validateRunResult(result);
 			
 			final String instanceId = instance.getInstanceId();
+			
 			// wait until instance is running to populate IP addresses
-			instance = waitForState(instanceId, null);
+			instance = waitForPendingState(instanceId, null);
 			
-			final String requestId = result.getSdkResponseMetadata().getRequestId();
-			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
-			
-			log.info("AWS EC2; action=launch; {}; requestId={}; status={}", 
-					Ec2.print(instance), requestId, statusCode);
-			
+			//final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
+			success = true;
 			return instance;
 			
 		} catch (AmazonClientException e) {
 			log.warn("Failed to launch EC2 instance; name={}; cause={}", name, e.getMessage());
 			throw new RuntimeException("Failed to launch EC2 instance", e);
+		} finally {
+			log.info("action={}, success={}; elapsedTime={}s; {}; requestId={}", 
+					"launchInstance", success, timer.elapsed(TimeUnit.SECONDS), Ec2.print(instance), requestId);
 		}
+	}
+
+	private RunInstancesRequest createRunRequest(String name, String instanceType, Map<String, String> tags) {
+		log.trace("createRunRequest(): name={}; instanceType={}", name, instanceType);
+
+		final TagSpecification tagSpec = createTagSpec(name, tags);
+		
+		final InstanceNetworkInterfaceSpecification nic = new InstanceNetworkInterfaceSpecification();
+		nic.withDeviceIndex(0)
+			.withSubnetId(config.getSubnetId())
+			.withGroups(config.getSecurityGroup())
+			.withAssociatePublicIpAddress(config.isAssignPublicIP());
+
+		final IamInstanceProfileSpecification profile = new IamInstanceProfileSpecification();
+		profile.withName(config.getIamProfile());
+		
+		final RunInstancesRequest runRequest = new RunInstancesRequest();
+		runRequest.withImageId(config.getImageId())
+			.withInstanceType(instanceType)
+			.withKeyName(config.getKeyName())
+			.withMinCount(1)
+			.withMaxCount(1)
+			.withNetworkInterfaces(nic)
+			.withIamInstanceProfile(profile)
+			.withTagSpecifications(tagSpec);
+		return runRequest;
 	}
 
 	private TagSpecification createTagSpec(String name, Map<String, String> tags) {
@@ -119,8 +128,6 @@ public class AwsEc2Client implements AwsComputeClient {
 		for (Entry<String,String> tag: tags.entrySet()) {
 			tagSpec.getTags().add(createTag(tag.getKey(), tag.getValue()));
 		}
-		//tags.getTags().add(createTag(CX_ROLE_TAG, role));
-		//tags.getTags().add(createTag(CX_VERSION_TAG, version));
 		tagSpec.setResourceType("instance");
 		return tagSpec;
 	}
@@ -137,10 +144,11 @@ public class AwsEc2Client implements AwsComputeClient {
 			final String requestId = result.getSdkResponseMetadata().getRequestId();
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 		
-			log.info("AWS EC2; action=start; instanceId={}; requestId={}; status={}", 
-						instanceId, requestId, statusCode);
+			final Instance instance = waitForPendingState(instanceId, null); 
 			
-			return waitForState(instanceId, null);
+			log.info("action=startInstance; instanceId={}; requestId={}; status={}", 
+					instanceId, requestId, statusCode);
+			return instance;
 			
 		} catch (AmazonClientException e) {
 			log.warn("Failed to start EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
@@ -160,7 +168,7 @@ public class AwsEc2Client implements AwsComputeClient {
 			final String requestId = result.getSdkResponseMetadata().getRequestId();
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 		
-			log.info("AWS EC2; action=stop; instanceId={}; requestId={}; status={}", 
+			log.info("action=stopInstance; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
 		} catch (AmazonClientException e) {
 			log.warn("Failed to stop EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
@@ -180,7 +188,7 @@ public class AwsEc2Client implements AwsComputeClient {
 			final String requestId = result.getSdkResponseMetadata().getRequestId();
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 		
-			log.info("AWS EC2; action=terminate; instanceId={}; requestId={}; status={}", 
+			log.info("action=terminateInstance; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
 		} catch (AmazonClientException e) {
 			log.warn("Failed to terminate EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
@@ -207,6 +215,10 @@ public class AwsEc2Client implements AwsComputeClient {
 			for (Reservation reservation : result.getReservations()) {
 				allInstances.addAll(reservation.getInstances());
 			}
+
+			log.debug("action=findInstances; tag={}; values={}; found={}", 
+					tag, values, allInstances.size());
+			
 			return allInstances;
 		} catch (AmazonClientException e) {
 			log.warn("Failed to find EC2 instances; cause={}", e.getMessage());
@@ -229,7 +241,7 @@ public class AwsEc2Client implements AwsComputeClient {
 			final String requestId = result.getSdkResponseMetadata().getRequestId();
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 			
-			log.info("AWS EC2: action=describe; {}; requestId={}; status={}", 
+			log.debug("action=describeInstance; {}; requestId={}; status={}", 
 					Ec2.print(instance), requestId, statusCode);
 			
 			return instance;
@@ -240,7 +252,7 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	/**
-	 * Calls describe until instance state is not pending, and optionally is not the state
+	 * Calls describe until instance state is not Pending, and optionally is not the state
 	 * supplied.  Times out after <code>config.getStatusTimeoutSec()</code>.
 	 * 
 	 * @param instanceId
@@ -248,13 +260,13 @@ public class AwsEc2Client implements AwsComputeClient {
 	 * @return instance or <null/> if not valid
 	 * @throws RuntimeException if unable to determine status in the alloted timeout
 	 */
-	private Instance waitForState(String instanceId, InstanceState skipState) {
-		log.trace("waitForState() : instanceId={}; skipState={}", instanceId, skipState);
+	private Instance waitForPendingState(String instanceId, InstanceState skipState) {
+		log.trace("waitForPendingState() : instanceId={}; skipState={}", instanceId, skipState);
 		
 		long sleepMs = config.getMonitorPollingIntervalSecs() * 1000;
 		
-		final TimedTask<Instance> task = 
-				new TimedTask<>("waitForState", config.getStatusTimeoutSec(), TimeUnit.SECONDS);
+		final TimeoutTask<Instance> task = 
+				new TimeoutTask<>("waitForState", config.getLaunchTimeoutSec(), TimeUnit.SECONDS);
 		try {
 			return task.execute(() -> {
 				Instance instance = describe(instanceId);
@@ -262,7 +274,8 @@ public class AwsEc2Client implements AwsComputeClient {
 				
 				InstanceState state = Ec2.getState(instance);
 				while (state.equals(InstanceState.PENDING) || state.equals(skipState)) {
-					log.trace("Instance Pending, waiting to refresh state; instanceId={}; sleep={}", instanceId, sleepMs); 
+					log.trace("state={}, waiting to refresh; instanceId={}; sleep={}ms", 
+							state, instanceId, sleepMs); 
 					Thread.sleep(sleepMs);
 					instance = describe(instanceId);
 					state = Ec2.getState(instance); 
@@ -282,13 +295,13 @@ public class AwsEc2Client implements AwsComputeClient {
 	
 	@Override
 	public boolean isProvisioned(String instanceId) {
-		final Instance instance = waitForState(instanceId, null);
+		final Instance instance = waitForPendingState(instanceId, null);
 		return Ec2.isProvisioned(instance);
 	}
 
 	@Override
 	public boolean isRunning(String instanceId) {
-		final Instance instance = waitForState(instanceId, null);
+		final Instance instance = waitForPendingState(instanceId, null);
 		return Ec2.isRunning(instance);
 	}
 

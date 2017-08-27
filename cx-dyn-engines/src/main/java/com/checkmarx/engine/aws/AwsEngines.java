@@ -19,7 +19,7 @@ import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
 import com.checkmarx.engine.manager.EngineProvisioner;
 import com.checkmarx.engine.rest.CxRestClient;
-import com.checkmarx.engine.utils.TimedTask;
+import com.checkmarx.engine.utils.TimeoutTask;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterables;
@@ -150,7 +150,7 @@ public class AwsEngines implements EngineProvisioner {
 
 	@Override
 	public void launch(DynamicEngine engine, EngineSize size, boolean waitForSpinup) {
-		log.trace("launch() : {}; size={}", engine, size);
+		log.debug("launch(): {}; size={}; wait={}", engine, size, waitForSpinup);
 		
 		findEngines();
 		
@@ -161,8 +161,10 @@ public class AwsEngines implements EngineProvisioner {
 		Instance instance = provisionedEngines.get(name);
 		String instanceId = null;
 		
-		final Stopwatch timer = Stopwatch.createStarted();
+		log.info("action=LaunchingEngine; name={}; {}", name, engine); 
+
 		boolean success = false;
+		final Stopwatch timer = Stopwatch.createStarted();
 		try {
 			if (instance == null) {
 				instance = launchEngine(engine, name, type, tags);
@@ -195,7 +197,7 @@ public class AwsEngines implements EngineProvisioner {
 				throw new RuntimeException("Error launching engine", e);
 			}
 		} finally {
-			log.debug("action=LaunchEngine; success={}; name={}; id={}; elapsedTime={}s; {}", 
+			log.info("action=LaunchedEngine; success={}; name={}; id={}; elapsedTime={}s; {}", 
 					success, name, instanceId, timer.elapsed(TimeUnit.SECONDS), Ec2.print(instance)); 
 		}
 	}
@@ -207,24 +209,34 @@ public class AwsEngines implements EngineProvisioner {
 	
 	@Override
 	public void stop(DynamicEngine engine, boolean forceTerminate) {
-		log.trace("stop() : {}", engine);
+		log.debug("stop() : {}", engine);
 
 		final String name = engine.getName();
 		final Instance instance = provisionedEngines.get(name);
-		
 		if (instance == null) {
 			throw new RuntimeException("Cannot stop engine, no instance found");
 		}
-		
 		final String instanceId = instance.getInstanceId();
-		if (config.isTerminateOnStop() || forceTerminate) {
-			ec2Client.terminate(instanceId);
-			engine.setState(State.UNPROVISIONED);
-		} else {
-			ec2Client.stop(instanceId);
-			engine.setState(State.IDLE);
+
+		String action = "StoppedEngine";
+		boolean success = false;
+		final Stopwatch timer = Stopwatch.createStarted();
+		try {
+			
+			if (config.isTerminateOnStop() || forceTerminate) {
+				action = "TerminatedEngine";
+				ec2Client.terminate(instanceId);
+				engine.setState(State.UNPROVISIONED);
+			} else {
+				ec2Client.stop(instanceId);
+				engine.setState(State.IDLE);
+			}
+			success = true;
+			
+		} finally {
+			log.info("action={}; success={}; name={}; id={}; elapsedTime={}ms; {}", 
+					action, success, name, instanceId, timer.elapsed(TimeUnit.MILLISECONDS), Ec2.print(instance)); 
 		}
-		
 	}
 
 	private Instance launchEngine(final DynamicEngine engine, final String name, 
@@ -248,12 +260,12 @@ public class AwsEngines implements EngineProvisioner {
 	private void pingEngine(Host host) throws Exception {
 		log.trace("pingEngine(): host={}", host);
 		
-		final TimedTask<Boolean> pingTask = 
-				new TimedTask<>("pingEngine", config.getMonitorTimeoutSec(), TimeUnit.SECONDS);
+		final TimeoutTask<Boolean> pingTask = 
+				new TimeoutTask<>("pingEngine", config.getCxEngineTimeoutSec(), TimeUnit.SECONDS);
 		try {
 			pingTask.execute(() -> {
 				while (!cxClient.pingEngine(host.getMonitorUrl())) {
-					log.trace("Engine ping failed, waiting to retry; {}; sleep={}", host, pollingMillis); 
+					log.trace("Engine ping failed, waiting to retry; {}; sleep={}ms", host, pollingMillis); 
 					Thread.sleep(pollingMillis);
 				}
 				return true;

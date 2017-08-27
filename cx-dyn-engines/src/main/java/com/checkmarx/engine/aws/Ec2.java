@@ -96,7 +96,7 @@ public class Ec2 {
 		return MoreObjects.toStringHelper(instance)
 				.add("id", instance.getInstanceId())
 				.add("name", getName(instance))
-				.add("instanceState", instance.getState().getName().toUpperCase())
+				.add("state", instance.getState().getName().toUpperCase())
 				.add("type", instance.getInstanceType())
 				.add("imageId", instance.getImageId())
 				.add("privateIp", instance.getPrivateIpAddress())
