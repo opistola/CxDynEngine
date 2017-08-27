@@ -11,7 +11,7 @@ public interface AwsComputeClient {
 	 * Launches an EC2 instance with the supplied parameters. 
 	 *  
 	 * @param name of instance
-	 * @param instanceType type of EC2 instance to launch, e.g. t2.small
+	 * @param instanceType of EC2 instance, e.g. m4.large
 	 * @param tags to include with the instance
 	 * @return the running EC2 instance
 	 */
@@ -22,7 +22,7 @@ public interface AwsComputeClient {
 	 *  
 	 * @param instanceId to start
 	 */
-	void start(String instanceId);
+	Instance start(String instanceId);
 
 	/**
 	 * Stops an EC2 instance
@@ -75,6 +75,6 @@ public interface AwsComputeClient {
 	/**
 	 * @return the current AWS configuration
 	 */
-	AwsConfig getConfig();
+	AwsEngineConfig getConfig();
 
 }

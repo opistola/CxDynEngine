@@ -94,7 +94,7 @@ public class DynamicEngine {
 	}
 	
 	public String getUrl() {
-		return host == null ? null : host.getUrl();
+		return host == null ? null : host.getCxManagerUrl();
 	}
 	
 	public DateTime getCurrentStateTime() {

@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +26,8 @@ public class QueueMonitorTests {
 	
 	private static final Logger log = LoggerFactory.getLogger(QueueMonitorTests.class);
 
+	private final boolean runTest = false;  //uncomment next line to run this test
+	//private final boolean runTest = true;
 
 	@Autowired
 	private QueueMonitor monitor;
@@ -43,6 +46,8 @@ public class QueueMonitorTests {
 	public void test() throws Exception {
 		log.trace("test()");
 		
+		Assume.assumeTrue(runTest);
+
 		cxClient.login();
 		
 		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();

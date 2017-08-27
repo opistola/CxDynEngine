@@ -3,6 +3,8 @@ package com.checkmarx.engine.aws;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,7 @@ import com.amazonaws.services.ec2.model.TagSpecification;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.checkmarx.engine.aws.Ec2.InstanceState;
+import com.checkmarx.engine.utils.TimedTask;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -45,9 +48,9 @@ public class AwsEc2Client implements AwsComputeClient {
 	private static final Logger log = LoggerFactory.getLogger(AwsEc2Client.class);
 	
 	private final AmazonEC2 client;
-	private final AwsConfig config;
+	private final AwsEngineConfig config;
 
-	public AwsEc2Client(AwsConfig config) {
+	public AwsEc2Client(AwsEngineConfig config) {
 		this.client = AmazonEC2ClientBuilder.defaultClient();
 		this.config = config;
 
@@ -55,13 +58,13 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
-	public AwsConfig getConfig() {
+	public AwsEngineConfig getConfig() {
 		return config;
 	}
 	
 	@Override
 	public Instance launch(String name, String instanceType, Map<String,String> tags) {
-		log.trace("launchInstance(): name={}; instanceType={}", name, instanceType);
+		log.trace("launch(): name={}; instanceType={}", name, instanceType);
 		
 		try {
 			final TagSpecification tagSpec = createTagSpec(name, tags);
@@ -90,7 +93,11 @@ public class AwsEc2Client implements AwsComputeClient {
 			
 			RunInstancesResult result = client.runInstances(runRequest);
 			
-			final Instance instance = validateRunResult(result);
+			Instance instance = validateRunResult(result);
+			
+			final String instanceId = instance.getInstanceId();
+			// wait until instance is running to populate IP addresses
+			instance = waitForState(instanceId, null);
 			
 			final String requestId = result.getSdkResponseMetadata().getRequestId();
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
@@ -100,9 +107,9 @@ public class AwsEc2Client implements AwsComputeClient {
 			
 			return instance;
 			
-		} catch (AmazonClientException ex) {
-			log.warn("AWS EC2 instance launch failed", ex);
-			return null;
+		} catch (AmazonClientException e) {
+			log.warn("Failed to launch EC2 instance; name={}; cause={}", name, e.getMessage());
+			throw new RuntimeException("Failed to launch EC2 instance", e);
 		}
 	}
 
@@ -119,7 +126,7 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
-	public void start(String instanceId) {
+	public Instance start(String instanceId) {
 		log.trace("start(): instanceId={}", instanceId);
 		
 		try {
@@ -132,8 +139,12 @@ public class AwsEc2Client implements AwsComputeClient {
 		
 			log.info("AWS EC2; action=start; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
-		} catch (AmazonClientException ex) {
-			log.warn("AWS EC2 start instance failed", ex);
+			
+			return waitForState(instanceId, null);
+			
+		} catch (AmazonClientException e) {
+			log.warn("Failed to start EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			throw new RuntimeException("Failed to start EC2 instance", e);
 		}
 	}
 	
@@ -151,8 +162,9 @@ public class AwsEc2Client implements AwsComputeClient {
 		
 			log.info("AWS EC2; action=stop; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
-		} catch (AmazonClientException ex) {
-			log.warn("AWS EC2 stop instance failed", ex);
+		} catch (AmazonClientException e) {
+			log.warn("Failed to stop EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			throw new RuntimeException("Failed to stop EC2 instance", e);
 		}
 	}
 	
@@ -170,8 +182,9 @@ public class AwsEc2Client implements AwsComputeClient {
 		
 			log.info("AWS EC2; action=terminate; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
-		} catch (AmazonClientException ex) {
-			log.warn("AWS EC2 terminate instance failed", ex);
+		} catch (AmazonClientException e) {
+			log.warn("Failed to terminate EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			throw new RuntimeException("Failed to terminate EC2 instance", e);
 		}
 	}
 	
@@ -179,9 +192,8 @@ public class AwsEc2Client implements AwsComputeClient {
 	public List<Instance> find(String tag, String... values) {
 		log.trace("list(): tag={}; values={}", tag, values);
 		
-		final List<Instance> allInstances = Lists.newArrayList();
 		try {
-			
+			final List<Instance> allInstances = Lists.newArrayList();
 			final DescribeInstancesRequest request = new DescribeInstancesRequest();
 			
 			if (!Strings.isNullOrEmpty(tag)) {
@@ -195,10 +207,11 @@ public class AwsEc2Client implements AwsComputeClient {
 			for (Reservation reservation : result.getReservations()) {
 				allInstances.addAll(reservation.getInstances());
 			}
-		} catch (AmazonClientException ex) {
-			log.warn("AWS EC2 DescribeInstances failed", ex);
+			return allInstances;
+		} catch (AmazonClientException e) {
+			log.warn("Failed to find EC2 instances; cause={}", e.getMessage());
+			throw new RuntimeException("Failed to find EC2 instances", e);
 		}
-		return allInstances;
 	}
 
 	@Override
@@ -220,50 +233,62 @@ public class AwsEc2Client implements AwsComputeClient {
 					Ec2.print(instance), requestId, statusCode);
 			
 			return instance;
-		} catch (AmazonClientException ex) {
-			log.warn("AWS EC2 describe instance failed", ex);
-			return null;
+		} catch (AmazonClientException e) {
+			log.warn("Failed to describe EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			throw new RuntimeException("Failed to describe EC2 instance", e);
 		}
 	}
 	
 	/**
-	 * Calls describeInstance until state is not pending, and optionally is not the state
-	 * supplied
+	 * Calls describe until instance state is not pending, and optionally is not the state
+	 * supplied.  Times out after <code>config.getStatusTimeoutSec()</code>.
 	 * 
 	 * @param instanceId
-	 * @param whileNotState state to avoid, can be null
+	 * @param skipState state to avoid, can be null
 	 * @return instance or <null/> if not valid
+	 * @throws RuntimeException if unable to determine status in the alloted timeout
 	 */
-	private Instance determineStatus(String instanceId, InstanceState whileNotState) {
-		log.trace("determineStatus() : instanceId={}; whileNotState={}", instanceId, whileNotState);
+	private Instance waitForState(String instanceId, InstanceState skipState) {
+		log.trace("waitForState() : instanceId={}; skipState={}", instanceId, skipState);
 		
-		Instance instance = this.describe(instanceId);
-		if (instance == null) return null;
+		long sleepMs = config.getMonitorPollingIntervalSecs() * 1000;
 		
-		InstanceState state = Ec2.getState(instance); 
-		while (state.equals(InstanceState.PENDING) || state.equals(whileNotState)) {
-			try {
-				Thread.sleep(config.getPollingIntervalSecs() * 1000);
-				instance = this.describe(instanceId);
-				state = InstanceState.from(instance.getState().getCode()); 
-			} catch (InterruptedException e) {
-				final String msg = String.format("Interrupted while waiting for AWS instanceId=%1s", 
-						instanceId);
-				throw new RuntimeException(msg, e);
-			}			
+		final TimedTask<Instance> task = 
+				new TimedTask<>("waitForState", config.getStatusTimeoutSec(), TimeUnit.SECONDS);
+		try {
+			return task.execute(() -> {
+				Instance instance = describe(instanceId);
+				if (instance == null) return null;
+				
+				InstanceState state = Ec2.getState(instance);
+				while (state.equals(InstanceState.PENDING) || state.equals(skipState)) {
+					log.trace("Instance Pending, waiting to refresh state; instanceId={}; sleep={}", instanceId, sleepMs); 
+					Thread.sleep(sleepMs);
+					instance = describe(instanceId);
+					state = Ec2.getState(instance); 
+				}
+				return instance;
+			});
+		} catch (TimeoutException e) {
+			log.warn("Failed to determine instance state due to timeout; instanceId={}; message={}", 
+					instanceId, e.getMessage());
+			throw new RuntimeException("Timed out waiting for instance state", e);
+		} catch (Exception e) {
+			log.warn("Failed to determine instance state; instanceId={}; cause={}; message={}", 
+					instanceId, e.getCause(), e.getMessage());
+			throw new RuntimeException("Failed to determine instance state", e);
 		}
-		return instance;
 	}
 	
 	@Override
 	public boolean isProvisioned(String instanceId) {
-		final Instance instance = determineStatus(instanceId, null);
+		final Instance instance = waitForState(instanceId, null);
 		return Ec2.isProvisioned(instance);
 	}
 
 	@Override
 	public boolean isRunning(String instanceId) {
-		final Instance instance = determineStatus(instanceId, null);
+		final Instance instance = waitForState(instanceId, null);
 		return Ec2.isRunning(instance);
 	}
 

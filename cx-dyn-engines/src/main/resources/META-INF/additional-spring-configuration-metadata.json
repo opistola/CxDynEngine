@@ -15,61 +15,6 @@
     "description": "A description for 'cx.restUrl'"
   },
   {
-    "name": "cx-aws.imageId",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.imageId'"
-  },
-  {
-    "name": "cx-aws.subnetId",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.subnetId'"
-  },
-  {
-    "name": "cx-aws.securityGroup",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.securityGroup'"
-  },
-  {
-    "name": "cx-aws.keyName",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.keyName'"
-  },
-  {
-    "name": "cx-aws.iamProfile",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.iamProfile'"
-  },
-  {
-    "name": "cx-aws.pollingIntervalSecs",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.pollingIntervalSecs'"
-  },
-  {
-    "name": "cx-aws.assignPublicIP",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.assignPublicIP'"
-  },
-  {
-    "name": "cx-aws.cxVersion",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.cxVersion'"
-  },
-  {
-    "name": "cx-aws.terminateOnStop",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.terminateOnStop'"
-  },
-  {
-    "name": "cx-aws.engineTypeMap",
-    "type": "java.lang.String",
-    "description": "A description for 'cx-aws.engineTypeMap.S'"
-  },
-  {
-    "name": "engine.strategy.single",
-    "type": "java.lang.String",
-    "description": "A description for 'engine.strategy.single'"
-  },
-  {
     "name": "cx.queueIntervalSecs",
     "type": "java.lang.String",
     "description": "A description for 'cx.queueIntervalSecs'"
@@ -78,5 +23,75 @@
     "name": "cx.enginePoolPrefix",
     "type": "java.lang.String",
     "description": "A description for 'cx.enginePoolPrefix'"
+  },
+  {
+    "name": "cx-aws-engine.assignPublicIP",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.assignPublicIP'"
+  },
+  {
+    "name": "cx-aws-engine.cxVersion",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.cxVersion'"
+  },
+  {
+    "name": "cx-aws-engine.iamProfile",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.iamProfile'"
+  },
+  {
+    "name": "cx-aws-engine.imageId",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.imageId'"
+  },
+  {
+    "name": "cx-aws-engine.keyName",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.keyName'"
+  },
+  {
+    "name": "cx-aws-engine.monitorPollingIntervalSecs",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.monitorPollingIntervalSecs'"
+  },
+  {
+    "name": "cx-aws-engine.monitorTimeoutSec",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.monitorTimeoutSec'"
+  },
+  {
+    "name": "cx-aws-engine.securityGroup",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.securityGroup'"
+  },
+  {
+    "name": "cx-aws-engine.statusTimeoutSec",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.statusTimeoutSec'"
+  },
+  {
+    "name": "cx-aws-engine.subnetId",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.subnetId'"
+  },
+  {
+    "name": "cx-aws-engine.terminateOnStop",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.terminateOnStop'"
+  },
+  {
+    "name": "cx-aws-engine.usePublicUrlForCx",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.usePublicUrlForCx'"
+  },
+  {
+    "name": "cx-aws-engine.usePublicUrlForMonitor",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.usePublicUrlForMonitor'"
+  },
+  {
+    "name": "cx-aws-engine.engineSizeMap",
+    "type": "java.lang.String",
+    "description": "A description for 'cx-aws-engine.engineSizeMap.S'"
   }
 ]}

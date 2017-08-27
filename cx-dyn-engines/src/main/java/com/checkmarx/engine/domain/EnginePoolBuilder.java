@@ -7,7 +7,7 @@ public interface EnginePoolBuilder {
 	EnginePoolBuilder addEntry(EnginePoolEntry entry);
 	
 	@Deprecated
-	EnginePoolBuilder addEntry(ScanSize size, int count);
+	EnginePoolBuilder addEntry(EngineSize size, int count);
 	
 	EnginePool build();
 	

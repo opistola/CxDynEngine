@@ -52,19 +52,19 @@ public class CxRestClient {
 		this.config = config;
 		this.timeoutMillis = config.getTimeoutSecs() * 1000;
 		
-		this.sastClient = buildRestTemplate(restTemplateBuilder);
-		this.engineClient = restTemplateBuilder
-				.setConnectTimeout(timeoutMillis)
-				.build();
+		this.sastClient = getSastBuilder(restTemplateBuilder).build();
+		this.engineClient = getRestBuilder(restTemplateBuilder).build();
 
 		log.info("ctor(): {}", this);
 	}
 	
-	private RestTemplate buildRestTemplate(RestTemplateBuilder restTemplateBuilder) {
-		return restTemplateBuilder
-				.requestFactory(getClientHttpRequestFactory())
-				.additionalInterceptors(new CxCookieAuthInterceptor())
-				.build();
+	private RestTemplateBuilder getRestBuilder(RestTemplateBuilder restTemplateBuilder) {
+		return restTemplateBuilder.requestFactory(getClientHttpRequestFactory());
+	}
+	
+	private RestTemplateBuilder getSastBuilder(RestTemplateBuilder restTemplateBuilder) {
+		return getRestBuilder(restTemplateBuilder)
+				.additionalInterceptors(new CxCookieAuthInterceptor());
 	}
 	
 	/**
@@ -85,7 +85,8 @@ public class CxRestClient {
 	    final HttpComponentsClientHttpRequestFactory clientHttpRequestFactory
 	    	= new HttpComponentsClientHttpRequestFactory(httpClient);
 	    clientHttpRequestFactory.setConnectTimeout(timeoutMillis);
-	    return clientHttpRequestFactory;	
+	    clientHttpRequestFactory.setReadTimeout(timeoutMillis);
+	    return clientHttpRequestFactory;
 	}
 
 	private interface Request<R> {

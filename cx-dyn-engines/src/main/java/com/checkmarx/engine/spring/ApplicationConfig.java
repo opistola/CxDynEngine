@@ -8,7 +8,7 @@ import com.checkmarx.engine.aws.AwsConstants;
 import com.checkmarx.engine.domain.DefaultEnginePoolBuilder;
 import com.checkmarx.engine.domain.EnginePool;
 import com.checkmarx.engine.domain.ScanQueue;
-import com.checkmarx.engine.domain.ScanSize;
+import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 import com.checkmarx.engine.manager.EngineMonitor;
 import com.checkmarx.engine.manager.EngineProvisioner;
@@ -19,9 +19,9 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 @Configuration
 public class ApplicationConfig {
 	
-	public static final ScanSize SMALL = new ScanSize("S", 0, 99999);
-	public static final ScanSize MEDIUM = new ScanSize("M", 100000, 499999);
-	public static final ScanSize LARGE = new ScanSize("L", 500000, 999999999);
+	public static final EngineSize SMALL = new EngineSize("S", 0, 99999);
+	public static final EngineSize MEDIUM = new EngineSize("M", 100000, 499999);
+	public static final EngineSize LARGE = new EngineSize("L", 500000, 999999999);
 	
 	@Bean
 	public JodaModule jacksonJodaModule() {

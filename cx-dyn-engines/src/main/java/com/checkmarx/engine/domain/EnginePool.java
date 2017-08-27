@@ -42,12 +42,12 @@ public class EnginePool {
 	/**
 	 * map of engine counts by size; key=ScanSize
 	 */
-	private final Map<ScanSize, AtomicLong> engineSizes = Maps.newLinkedHashMap();
+	private final Map<EngineSize, AtomicLong> engineSizes = Maps.newLinkedHashMap();
 	
 	/**
 	 * map of scan sizes; key=size name (string)
 	 */
-	private final Map<String, ScanSize> scanSizes = Maps.newConcurrentMap();
+	private final Map<String, EngineSize> scanSizes = Maps.newConcurrentMap();
 	
 	public EnginePool(Set<EnginePoolEntry> entries, Set<DynamicEngine> engines) {
 		this(entries);
@@ -65,7 +65,7 @@ public class EnginePool {
 	
 	private void initSizeMaps(Set<EnginePoolEntry> entries) {
 		entries.forEach((entry) -> {
-			final ScanSize scanSize = entry.getScanSize();
+			final EngineSize scanSize = entry.getScanSize();
 			final String size = scanSize.getName();
 			scanSizes.put(scanSize.getName(), scanSize);
 			engineSizes.put(scanSize, new AtomicLong(0));
@@ -80,8 +80,8 @@ public class EnginePool {
 	
 	private void addEngine(DynamicEngine engine) {
 		final String size = engine.getSize();
-		final ScanSize scanSize = scanSizes.get(size);
-		final DynamicEngine.State state = engine.getState();
+		final EngineSize scanSize = scanSizes.get(size);
+		final State state = engine.getState();
 		
 		//initEngineSizes(size);
 		engineSizes.get(scanSize).incrementAndGet();
@@ -159,16 +159,16 @@ public class EnginePool {
 		engine.setState(toState);
 	}
 	
-	public ScanSize calcEngineSize(long loc) {
+	public EngineSize calcEngineSize(long loc) {
 		log.trace("calcEngineSize() : loc={}", loc);
 		
-		for (ScanSize size : engineSizes.keySet()) {
+		for (EngineSize size : engineSizes.keySet()) {
 			if (size.isMatch(loc)) return size;
 		}
 		return null;
 	}
 	
-	public DynamicEngine allocateEngine(ScanSize scanSize, State fromState) {
+	public DynamicEngine allocateEngine(EngineSize scanSize, State fromState) {
 		log.trace("allocateEngine() : size={}; state={}", scanSize.getName(), fromState);
 		
 		final String size = scanSize.getName();
@@ -221,15 +221,15 @@ public class EnginePool {
 	
 	public static class EnginePoolEntry {
 		
-		private final ScanSize scanSize;
+		private final EngineSize scanSize;
 		private final int count;
 		
-		public EnginePoolEntry(ScanSize scanSize, int count) {
+		public EnginePoolEntry(EngineSize scanSize, int count) {
 			this.scanSize = scanSize;
 			this.count = count;
 		}
 
-		public ScanSize getScanSize() {
+		public EngineSize getScanSize() {
 			return scanSize;
 		}
 

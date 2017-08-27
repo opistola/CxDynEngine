@@ -16,17 +16,24 @@ import com.google.common.base.MoreObjects;
 public class Host {
 	
 	private final String name;
-	private final String ip;
-	private final String url;
-	private final String externalUrl;
+	private final String privateIp;
+	private final String publicIp;
+	private final String cxManagerUrl;
+	private final String monitorUrl;
 	private final DateTime launchTime;
 	
-	public Host(String name, String ip, String url, String externalUrl, DateTime launchTime) {
+	public Host(String name, String privateIp, String managerUrl, DateTime launchTime) {
+		this(name, privateIp, null, managerUrl, null, launchTime);
+	}
+	
+	public Host(String name, String privateIp, String publicIp, 
+			String managerUrl, String monitorUrl, DateTime launchTime) {
 		super();
 		this.name = name;
-		this.ip = ip;
-		this.url = url;
-		this.externalUrl = externalUrl;
+		this.privateIp = privateIp;
+		this.publicIp = publicIp;
+		this.cxManagerUrl = managerUrl;
+		this.monitorUrl = monitorUrl;
 		this.launchTime = launchTime;
 	}
 
@@ -35,15 +42,21 @@ public class Host {
 	}
 
 	public String getIp() {
-		return ip;
+		return privateIp;
 	}
 
-	public String getUrl() {
-		return url;
+	/**
+	 * Returns the url for the CxManager 
+	 */
+	public String getCxManagerUrl() {
+		return cxManagerUrl;
 	}
 	
-	public String getExternalUrl() {
-		return externalUrl;
+	/**
+	 * Returns the url for monitoring the host during spinup 
+	 */
+	public String getMonitorUrl() {
+		return monitorUrl;
 	}
 
 	public DateTime getLaunchTime() {
@@ -52,7 +65,7 @@ public class Host {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(name, ip, url);
+		return Objects.hash(name, privateIp, cxManagerUrl);
 	}
 
 	@Override
@@ -62,17 +75,18 @@ public class Host {
 		if (getClass() != obj.getClass()) return false;
 		final Host other = (Host) obj;
 		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.ip, other.ip)
-				&& Objects.equals(this.url, other.url);
+				&& Objects.equals(this.privateIp, other.privateIp)
+				&& Objects.equals(this.publicIp, other.publicIp);
 	}
 
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("name", name)
-				.add("ip", ip)
-				.add("url", url)
-				.add("externalUrl", externalUrl)
+				.add("privateIp", privateIp)
+				.add("publicIp", publicIp)
+				.add("cxManagerUrl", cxManagerUrl)
+				.add("monitorUrl", monitorUrl)
 				.add("launchTime", launchTime)
 				.toString();
 	}

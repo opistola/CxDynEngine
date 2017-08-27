@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,12 +20,17 @@ public class EngineServiceTests {
 	
 	private static final Logger log = LoggerFactory.getLogger(EngineServiceTests.class);
 
+	private final boolean runTest = false;  //uncomment next line to run this test
+	//private final boolean runTest = true;
+
 	@Autowired
 	private EngineService service;
 	
 	@Before
 	public void setUp() throws Exception {
 		log.trace("setup()");
+
+		Assume.assumeTrue(runTest);
 
 		assertThat(service, is(notNullValue()));
 	}
@@ -33,9 +39,11 @@ public class EngineServiceTests {
 	public void test() throws Exception {
 		log.trace("test()");
 		
+		Assume.assumeTrue(runTest);
+
 		service.run();
 		
-		Thread.sleep(10*60*1000);
+		Thread.sleep(10*60*1000);  // 10 mins
 	}
 
 }

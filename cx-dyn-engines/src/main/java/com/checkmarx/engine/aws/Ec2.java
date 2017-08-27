@@ -90,6 +90,8 @@ public class Ec2 {
 	}
 
 	public static String print(@NotNull Instance instance) {
+		if (instance == null) return "null";
+		
 		final String tags = printTags(instance.getTags(), false);
 		return MoreObjects.toStringHelper(instance)
 				.add("id", instance.getInstanceId())

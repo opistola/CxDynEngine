@@ -32,7 +32,7 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 	}
 	
 	@Override
-	public EnginePoolBuilder addEntry(ScanSize size, int count) {
+	public EnginePoolBuilder addEntry(EngineSize size, int count) {
 		entries.add(new EnginePoolEntry(size, count));
 		return this;
 	}
@@ -45,7 +45,7 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 		return new EnginePool(entries, engines);
 	}
 
-	private void addEngines(ScanSize size, int count) {
+	private void addEngines(EngineSize size, int count) {
 		log.trace("addEngines(): {}, count={}", size, count);
 		for(int i = 1; i <= count; i++) {
 			final String name = String.format("%s-%s-%02d", engineNamePrefix, size.getName(), i);

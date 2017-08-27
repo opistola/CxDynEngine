@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EnginePool;
-import com.checkmarx.engine.domain.ScanSize;
+import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.rest.CxRestClient;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.rest.model.ScanRequest;
@@ -29,12 +29,12 @@ public class EngineMonitor implements Runnable {
 	//private final EngineLauncher engineLauncher;
 
 	/**
-	 * map of scans assigned to engines; key = Scan.RunId, value = EngineId
+	 * map of scans assigned to engines; key=Scan.RunId, value=cxEngineId
 	 */
 	private final Map<String, Long> engineScans = Maps.newConcurrentMap();
 	
 	/**
-	 * map of registered cx engine servers, key=engineId
+	 * map of registered cx engine servers, key=cxEngineId
 	 */
 	private Map<Long, DynamicEngine> cxEngines = Maps.newConcurrentMap();
 	
@@ -108,7 +108,7 @@ public class EngineMonitor implements Runnable {
 		public void onScanQueued(ScanRequest scan) {
 			log.debug("onScanQueued() : {}", scan);
 
-			final ScanSize size = calcScanSize(scan);
+			final EngineSize size = calcScanSize(scan);
 			if (size == null) {
 				log.error("Invalid scan size; {}", scan); 
 				return;
@@ -124,11 +124,11 @@ public class EngineMonitor implements Runnable {
 
 		}
 
-		private ScanSize calcScanSize(ScanRequest scan) {
+		private EngineSize calcScanSize(ScanRequest scan) {
 			return pool.calcEngineSize(scan.getLoc());
 		}
 
-		private boolean allocateIdleEngine(ScanRequest scan, ScanSize size) {
+		private boolean allocateIdleEngine(ScanRequest scan, EngineSize size) {
 			log.trace("allocateIdleEngine() : {}; size={}", scan, size);
 
 			final State state = State.IDLE;
@@ -140,7 +140,7 @@ public class EngineMonitor implements Runnable {
 			return true;
 		}
 		
-		private boolean allocateNewEngine(ScanRequest scan, ScanSize size) {
+		private boolean allocateNewEngine(ScanRequest scan, EngineSize size) {
 			log.trace("allocateNewEngine() : {}; size={}", scan, size);
 
 			final State state = DynamicEngine.State.UNPROVISIONED;
@@ -188,7 +188,7 @@ public class EngineMonitor implements Runnable {
 			return new EngineServer(engineName, url, size, size, 1, false);
 		}
 
-		private boolean checkActiveEngines(ScanRequest scan, ScanSize size) {
+		private boolean checkActiveEngines(ScanRequest scan, EngineSize size) {
 			log.trace("checkActiveEngines() : {}; size={}", scan, size);
 
 			//final State state = State.SCANNING;

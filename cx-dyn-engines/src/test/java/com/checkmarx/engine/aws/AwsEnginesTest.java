@@ -22,7 +22,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.checkmarx.engine.aws.AwsEngines;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.DynamicEngine.State;
-import com.checkmarx.engine.domain.ScanSize;
+import com.checkmarx.engine.domain.EngineSize;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
@@ -31,8 +31,8 @@ public class AwsEnginesTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEnginesTest.class);
 
-	//private final boolean runTest = false;  //uncomment next line to run this test
-	private final boolean runTest = true;
+	private final boolean runTest = false;  //uncomment next line to run this test
+	//private final boolean runTest = true;
 	
 	@Autowired
 	private AwsEngines awsEngines;
@@ -43,17 +43,15 @@ public class AwsEnginesTest {
 	public void setUp() throws Exception {
 		log.trace("setUp()");
 
-		Assume.assumeTrue(runTest);
-		
 		assertThat(awsEngines, is(notNullValue()));
 	}
 	
 	@After
 	public void tearDown() throws Exception {
 		runningEngines.forEach((engine) -> {
-			awsEngines.stop(engine);
+			awsEngines.stop(engine, true);
 			log.debug("Stopped: {}", engine);
-			assertThat(engine.getState(), is(State.IDLE));
+			assertThat(engine.getState(), is(State.UNPROVISIONED));
 		});
 	}
 	
@@ -81,15 +79,17 @@ public class AwsEnginesTest {
 	public void testLaunchAndStop() throws Exception {
 		log.trace("testLaunchAndStop()");
 		
+		//Assume.assumeTrue(runTest);
+
 		final String NAME = "cx-engine-test-01";
 		
-		final ScanSize size = new ScanSize("S", 1, 50000);
+		final EngineSize size = new EngineSize("S", 1, 50000);
 		final DynamicEngine engine = new DynamicEngine(NAME, size.getName(), AwsConstants.BILLING_INTERVAL_SECS);
 		log.debug("Pre-launch: {}", engine);
 		assertThat(engine.getState(), is(State.UNPROVISIONED));
 		
-		awsEngines.launch(engine, size, false);
-		//runningEngines.add(engine);
+		awsEngines.launch(engine, size, true);
+		runningEngines.add(engine);
 		
 		log.debug("Launched: {}", engine);
 		assertThat(engine.getState(), is(State.IDLE));
@@ -97,7 +97,7 @@ public class AwsEnginesTest {
 		assertThat(engine.getHost(), is(notNullValue()));
 		assertThat(engine.getHost().getName(), is(NAME));
 		assertThat(engine.getHost().getIp(), is(notNullValue()));
-		assertThat(engine.getHost().getUrl(), is(notNullValue()));
+		assertThat(engine.getHost().getCxManagerUrl(), is(notNullValue()));
 	
 		Thread.sleep(3000);
 

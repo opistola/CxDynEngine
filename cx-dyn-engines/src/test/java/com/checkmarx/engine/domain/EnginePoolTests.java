@@ -32,9 +32,9 @@ public class EnginePoolTests {
 
 	private EnginePool pool;
 	
-	public static final ScanSize SMALL = new ScanSize("S", 0, 99999);
-	public static final ScanSize MEDIUM = new ScanSize("M", 100000, 499999);
-	public static final ScanSize LARGE = new ScanSize("L", 500000, 999999999);
+	public static final EngineSize SMALL = new EngineSize("S", 0, 99999);
+	public static final EngineSize MEDIUM = new EngineSize("M", 100000, 499999);
+	public static final EngineSize LARGE = new EngineSize("L", 500000, 999999999);
 	
 	@Before
 	public void setUp() throws Exception {
@@ -137,7 +137,7 @@ public class EnginePoolTests {
 		
 		final DynamicEngine newEngine = new DynamicEngine(name, e.getSize(), AwsConstants.BILLING_INTERVAL_SECS);
 		newEngine.setState(State.IDLE);
-		newEngine.setHost(new Host(name, "ip", "url", null, DateTime.now()));
+		newEngine.setHost(new Host(name, "ip", "url", DateTime.now()));
 		assertEquals(newEngine, e);
 		
 		final DynamicEngine oldEngine = pool.replaceEngine(newEngine);

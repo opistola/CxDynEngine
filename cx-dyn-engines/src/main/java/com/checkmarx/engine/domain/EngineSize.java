@@ -3,13 +3,13 @@ package com.checkmarx.engine.domain;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
-public class ScanSize {
+public class EngineSize {
 	
 	private final String name;
 	private final long minLOC;
 	private final long maxLOC;
 	
-	public ScanSize(String name, int minLOC, int maxLOC) {
+	public EngineSize(String name, int minLOC, int maxLOC) {
 		this.name = name;
 		this.minLOC = minLOC;
 		this.maxLOC = maxLOC;
@@ -44,7 +44,7 @@ public class ScanSize {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ScanSize other = (ScanSize) obj;
+		EngineSize other = (EngineSize) obj;
 		if (maxLOC != other.maxLOC)
 			return false;
 		if (minLOC != other.minLOC)

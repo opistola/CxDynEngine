@@ -3,7 +3,7 @@ package com.checkmarx.engine.manager;
 import java.util.List;
 
 import com.checkmarx.engine.domain.DynamicEngine;
-import com.checkmarx.engine.domain.ScanSize;
+import com.checkmarx.engine.domain.EngineSize;
 
 /**
  * Manages provisioning of dynamic engines utilizing an underlying IaaS provider, e.g. AWS.
@@ -50,7 +50,7 @@ public interface EngineProvisioner {
 	 * @param waitForSpinup if true, blocks until the engine process responds to requests.
 	 * 						This may take several more minutes.
 	 */
-	void launch(DynamicEngine engine, ScanSize size, boolean waitForSpinup);
+	void launch(DynamicEngine engine, EngineSize size, boolean waitForSpinup);
 	
 
 	/**

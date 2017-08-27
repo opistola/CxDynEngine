@@ -15,10 +15,11 @@ import com.amazonaws.util.StringUtils;
 import com.checkmarx.engine.aws.Ec2.InstanceState;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.DynamicEngine.State;
-import com.checkmarx.engine.domain.ScanSize;
+import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
 import com.checkmarx.engine.manager.EngineProvisioner;
 import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.utils.TimedTask;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterables;
@@ -34,13 +35,21 @@ public class AwsEngines implements EngineProvisioner {
 
 	private static final Logger log = LoggerFactory.getLogger(AwsEngines.class);
 	
-	private final AwsConfig config;
+	private final AwsEngineConfig config;
 	private final AwsComputeClient ec2Client;
 	private final CxRestClient cxClient;
 	private final int pollingMillis;
-	// key=engine name
+
+	/**
+	 * Maps engine name to EC2 instance; key=engine name
+	 */
 	private final Map<String, Instance> provisionedEngines = Maps.newConcurrentMap();
-	// key=size name, value=instanceType
+	
+	/**
+	 * Maps EngineSize to EC2 instanceType;
+	 * key=size (name), 
+	 * value=ec2 instance type (e.g. m4.large)
+	 */
 	private final Map<String, String> engineTypeMap;
 	
 	public AwsEngines(
@@ -50,8 +59,8 @@ public class AwsEngines implements EngineProvisioner {
 		this.ec2Client = awsClient;
 		this.config = awsClient.getConfig(); 
 		this.cxClient = engineClient;
-		this.engineTypeMap = config.getEngineTypeMap();
-		this.pollingMillis = config.getPollingIntervalSecs() * 1000;
+		this.engineTypeMap = config.getEngineSizeMap();
+		this.pollingMillis = config.getMonitorPollingIntervalSecs() * 1000;
 		
 		log.info("ctor(): {}", this);
 	}
@@ -127,7 +136,7 @@ public class AwsEngines implements EngineProvisioner {
 		String sizeTag = Ec2.getTag(instance, CX_SIZE_TAG);
 		if (!StringUtils.isNullOrEmpty(sizeTag)) return sizeTag;
 		
-		final Map<String, String> sizeMap = config.getEngineTypeMap();
+		final Map<String, String> sizeMap = config.getEngineSizeMap();
 		
 		for (Entry<String,String> entry : sizeMap.entrySet()) {
 			String instanceType = entry.getValue();
@@ -140,7 +149,7 @@ public class AwsEngines implements EngineProvisioner {
 	}
 
 	@Override
-	public void launch(DynamicEngine engine, ScanSize size, boolean waitForSpinup) {
+	public void launch(DynamicEngine engine, EngineSize size, boolean waitForSpinup) {
 		log.trace("launch() : {}; size={}", engine, size);
 		
 		findEngines();
@@ -152,7 +161,8 @@ public class AwsEngines implements EngineProvisioner {
 		Instance instance = provisionedEngines.get(name);
 		String instanceId = null;
 		
-		final Stopwatch timer = Stopwatch.createStarted(); 
+		final Stopwatch timer = Stopwatch.createStarted();
+		boolean success = false;
 		try {
 			if (instance == null) {
 				instance = launchEngine(engine, name, type, tags);
@@ -163,22 +173,30 @@ public class AwsEngines implements EngineProvisioner {
 			if (Ec2.isTerminated(instance)) {
 				instance = launchEngine(engine, name, type, tags);
 				instanceId = instance.getInstanceId();
-			} else if (!ec2Client.isRunning(instanceId)) {
-				ec2Client.start(instanceId);
+			} else if (!Ec2.isRunning(instance)) {
+				instance = ec2Client.start(instanceId);
 			} else {
+				// host is running
 			}
 			final Host host = createHost(name, instance);
 			engine.setHost(host);
 			
 			if (waitForSpinup) {
-				waitForSpinup(host);
+				pingEngine(host);
 			}
-			//engine.setHost(createHost(name, instance));
 			engine.setState(State.IDLE);
-			
+			success = true;
+		} catch (Throwable e) {
+			log.error("Error occurred while launching AWS EC2 instance; name={}; {}", name, engine, e);
+			if (!StringUtils.isNullOrEmpty(instanceId)) {
+				log.warn("Terminating instance due to error; instanceId={}", instanceId);
+				ec2Client.terminate(instanceId);
+				instance = null;
+				throw new RuntimeException("Error launching engine", e);
+			}
 		} finally {
-			log.debug("Launched instance: name={}; id={}; elapsedTime={}s; {}", 
-					name, instanceId, timer.elapsed(TimeUnit.SECONDS), Ec2.print(instance)); 
+			log.debug("action=LaunchEngine; success={}; name={}; id={}; elapsedTime={}s; {}", 
+					success, name, instanceId, timer.elapsed(TimeUnit.SECONDS), Ec2.print(instance)); 
 		}
 	}
 
@@ -214,56 +232,47 @@ public class AwsEngines implements EngineProvisioner {
 		log.debug("launchEngine(): name={}; type={}", name, type);
 		
 		final Instance instance = ec2Client.launch(name, type, tags);
-		//engine.setState(State.SCANNING);
 		provisionedEngines.put(name, instance);
 		return instance;
 	}
 
 	private Host createHost(final String name, final Instance instance) {
-		final String ip = getIpAddress(instance);
-		final String extIp = instance.getPublicIpAddress();
+		final String ip = instance.getPrivateIpAddress();
+		final String publicIp = instance.getPublicIpAddress();
+		final String cxIp = config.isUsePublicUrlForCx() ? publicIp : ip;
+		final String monitorIp = config.isUsePublicUrlForMonitor() ? publicIp : ip;
 		final DateTime launchTime = new DateTime(instance.getLaunchTime());
-		return new Host(name, ip, buildUrl(ip), buildUrl(extIp), launchTime);
+		return new Host(name, ip, publicIp, buildCxUrl(cxIp), buildMonitorUrl(monitorIp), launchTime);
 	}
 
-	private void waitForSpinup(Host host) {
-		log.trace("waitForSpinup() : host={}", host);
+	private void pingEngine(Host host) throws Exception {
+		log.trace("pingEngine(): host={}", host);
 		
-		String server = host.getExternalUrl();
-		if (StringUtils.isNullOrEmpty(server))
-			server = host.getUrl();
-		while (!cxClient.pingEngine(server)) {
-			try {
-				Thread.sleep(pollingMillis);
-			} catch (InterruptedException e) {
-				final String msg = String.format("Interrupted while waiting for AWS; instance=%1s", 
-						host.getName());
-				throw new RuntimeException(msg, e);
-			}
+		final TimedTask<Boolean> pingTask = 
+				new TimedTask<>("pingEngine", config.getMonitorTimeoutSec(), TimeUnit.SECONDS);
+		try {
+			pingTask.execute(() -> {
+				while (!cxClient.pingEngine(host.getMonitorUrl())) {
+					log.trace("Engine ping failed, waiting to retry; {}; sleep={}", host, pollingMillis); 
+					Thread.sleep(pollingMillis);
+				}
+				return true;
+			});
+		} catch (Exception e) {
+			log.warn("Failed to ping CxEngine service; {}; cause={}; message={}", 
+					host, e.getCause(), e.getMessage());
+			throw e;
 		}
 	}
 	
-	private String getIpAddress(Instance instance)  {
-		String ip = instance.getPrivateIpAddress();
-		final String instanceId = instance.getInstanceId();
-		while (ip == null) {
-			try {
-				Thread.sleep(pollingMillis);
-				Instance newInstance = ec2Client.describe(instanceId);
-				ip = newInstance.getPrivateIpAddress();
-			} catch (InterruptedException e) {
-				final String msg = String.format("Interrupted while waiting for AWS instanceId=%1s", 
-						instance.getInstanceId());
-				throw new RuntimeException(msg, e);
-			}
-		}
-		return ip;
-	}
-
-	private String buildUrl(String ip) {
+	private String buildCxUrl(String ip) {
 		if (StringUtils.isNullOrEmpty(ip)) return null;
 		final String host = "http://" + ip;
 		return cxClient.buildEngineServerUrl(host);
+	}
+
+	private String buildMonitorUrl(String ip) {
+		return "http://" + ip;
 	}
 
 	@Override

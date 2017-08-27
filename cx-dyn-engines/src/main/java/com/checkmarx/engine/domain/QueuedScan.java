@@ -5,15 +5,15 @@ import com.google.common.base.MoreObjects;
 
 public class QueuedScan {
 
-	private final ScanSize size;
+	private final EngineSize size;
 	private final ScanRequest scanRequest;
 	
-	public QueuedScan(ScanSize size, ScanRequest scanJob) {
+	public QueuedScan(EngineSize size, ScanRequest scanJob) {
 		this.size = size;
 		this.scanRequest = scanJob;
 	}
 
-	public ScanSize getSize() {
+	public EngineSize getSize() {
 		return size;
 	}
 
