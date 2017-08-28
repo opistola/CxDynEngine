@@ -2,8 +2,10 @@ package com.checkmarx.engine.domain;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,16 +34,15 @@ public class EnginePool {
 	private final Map<String, Set<DynamicEngine>> expiringEngines = Maps.newConcurrentMap();
 	private final Map<String, Set<DynamicEngine>> unprovisionedEngines = Maps.newConcurrentMap();
 
-	// 1st key=engine state, 2nd key = engine size
 	/**
 	 * map of engine maps by State, then by size name
+	 * 1st key=engine state, 2nd key = engine size
 	 */
-	private final Map<State, Map<String, Set<DynamicEngine>>> engineMaps 
-		= Maps.newEnumMap(State.class);
+	private final Map<State, Map<String, Set<DynamicEngine>>> engineMaps = Maps.newEnumMap(State.class);
 
-	//immutable after initialization
 	/**
 	 * map of engine counts by size; key=ScanSize
+	 * immutable after initialization
 	 */
 	private final Map<EngineSize, AtomicLong> engineSizes = Maps.newLinkedHashMap();
 	
@@ -49,6 +50,7 @@ public class EnginePool {
 	 * map of scan sizes; key=size name (string)
 	 */
 	private final Map<String, EngineSize> scanSizes = Maps.newConcurrentMap();
+	
 	
 	public EnginePool(Set<EnginePoolEntry> entries, Set<DynamicEngine> engines) {
 		this(entries);
@@ -71,6 +73,7 @@ public class EnginePool {
 			scanSizes.put(scanSize.getName(), scanSize);
 			engineSizes.put(scanSize, new AtomicLong(0));
 			engineMaps.forEach((k, map)->initEngineMaps(size, map));
+			log.info("Adding engine size; {}", scanSize); 
 		});
 	}
 
@@ -113,7 +116,7 @@ public class EnginePool {
 	}
 
 	public ImmutableMap<String, Set<DynamicEngine>> getIdleEngines() {
-		return null;
+		return ImmutableMap.copyOf(idleEngines);
 	}
 
 	Map<String, Set<DynamicEngine>> getExpiringEngines() {
@@ -122,6 +125,10 @@ public class EnginePool {
 
 	Map<String, Set<DynamicEngine>> getUnprovisionedEngines() {
 		return unprovisionedEngines;
+	}
+	
+	public IdleEngineMonitor createIdleEngineMonitor(BlockingQueue<DynamicEngine> expiringEngines) {
+		return new IdleEngineMonitor(expiringEngines);
 	}
 
 	/**
@@ -193,7 +200,7 @@ public class EnginePool {
 	
 	public void deallocateEngine(DynamicEngine engine) {
 		log.trace("unallocateEngine() : {}", engine);
-		changeState(engine, State.IDLE);
+		changeState(engine, State.UNPROVISIONED);
 		log.debug("Engine unallocated: pool={}", this);
 	}
 
@@ -221,6 +228,48 @@ public class EnginePool {
 				.add("engineSizes", "[" + sbSizes.toString().replaceAll(", $", "") + "]")
 				.add("engines", "[" + sb.toString().replaceAll("; $", "") + "]")
 				.toString();
+	}
+	
+	public class IdleEngineMonitor implements Runnable {
+		
+		private final Logger log = LoggerFactory.getLogger(EnginePool.IdleEngineMonitor.class);
+		
+		private final BlockingQueue<DynamicEngine> expiringEngines;
+
+		public IdleEngineMonitor(BlockingQueue<DynamicEngine> expiringEngines) {
+			this.expiringEngines = expiringEngines;
+		}
+
+		@Override
+		public void run() {
+			log.trace("run()");
+			
+			// loop thru IDLE engines looking for expiration
+			idleEngines.forEach((size, engines) -> {
+				
+				engines.forEach((engine) -> {
+					try {
+						int count = 0;
+						final DateTime expireTime = engine.getTimeToExpire();
+						log.trace("Checking idle engine: name={}; expireTime={}", 
+								engine.getName(), expireTime);
+	
+						if (expireTime == null) return;
+
+						// give us 2 minutes buffer to expire
+						if (expireTime.minusMinutes(2).isBeforeNow()) {
+							count++;
+							engine.setState(State.EXPIRING);
+							expiringEngines.put(engine);
+						}
+						log.debug("Expiring engine count={}", count);
+					} catch (InterruptedException e) {
+						log.info("EngineMonitor interrupted");
+					}
+				}); 
+			});
+		}
+		
 	}
 	
 	public static class EnginePoolEntry {

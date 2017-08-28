@@ -23,19 +23,19 @@ public class DynamicEngineTests {
 	public void testTimeToExpire() throws Exception {
 		log.trace("testTimeToExpire()");
 		
-		final int EXPIRE_DURATION = 3;
+		final long EXPIRE_DURATION = 3;
 		
 		final DynamicEngine engine = new DynamicEngine("name", "S", EXPIRE_DURATION);
 		log.debug("unprovisioned: {}", engine);
 		assertThat(engine.getState(), is(State.UNPROVISIONED));
 		assertThat(engine.getRunTime(), is(Duration.ZERO));
 		assertThat(engine.getTimeToExpire(), is(nullValue()));
+		
 		Thread.sleep(1000);
 		
 		engine.setState(State.IDLE);
 		Thread.sleep(1000);
 		log.debug("idle: {}", engine);
-
 		assertThat(engine.getState(), is(State.IDLE));
 		assertThat(engine.getRunTime().getStandardSeconds(), is(1L));
 		assertThat(engine.getTimeToExpire(), is(notNullValue()));
@@ -55,6 +55,7 @@ public class DynamicEngineTests {
 		log.debug("idle: {}", engine);
 		assertThat(engine.getState(), is(State.IDLE));
 		final DateTime nextTimeToExpire = engine.getTimeToExpire();
+		assertThat(firstTimeToExpire.isBeforeNow(), is(true));
 		assertThat(nextTimeToExpire.isAfterNow(), is(true));
 		assertThat(nextTimeToExpire.isAfter(firstTimeToExpire), is(true));
 

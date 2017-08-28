@@ -125,7 +125,7 @@ public class AwsEc2ClientTests {
 	public void testListInstances() {
 		log.trace("testListInstances()");
 
-		List<Instance> instances = ec2Client.find("cx", "manager");
+		List<Instance> instances = ec2Client.find("cx-role", "MANAGER");
 		assertThat(instances, is(notNullValue()));
 		assertThat(instances.isEmpty(), is(false));
 		

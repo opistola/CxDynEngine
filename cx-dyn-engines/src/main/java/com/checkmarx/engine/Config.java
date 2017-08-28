@@ -15,8 +15,10 @@ public class Config {
 	private String password;
 	private String cxEnginePrefix = "**";
 	private String enginePoolPrefix = "cx-engine";
+	private int idleMonitorSecs = 15;
 	private int queueCapacity = 100;
 	private int queueIntervalSecs = 20;
+	private long queueingEngineId=1L;
 	private String restUrl;
 	private int timeoutSecs = 20;
 	private String userAgent = "CxDynamicEngineManager";
@@ -53,6 +55,14 @@ public class Config {
 		this.enginePoolPrefix = enginePoolPrefix;
 	}
 
+	public int getIdleMonitorSecs() {
+		return idleMonitorSecs;
+	}
+
+	public void setIdleMonitorSecs(int idleMonitorSecs) {
+		this.idleMonitorSecs = idleMonitorSecs;
+	}
+
 	public int getQueueCapacity() {
 		return queueCapacity;
 	}
@@ -67,6 +77,14 @@ public class Config {
 	
 	public void setQueueIntervalSecs(int queueIntervalSecs) {
 		this.queueIntervalSecs = queueIntervalSecs;
+	}
+
+	public long getQueueingEngineId() {
+		return queueingEngineId;
+	}
+
+	public void setQueueingEngineId(long queueingEngineId) {
+		this.queueingEngineId = queueingEngineId;
 	}
 
 	public String getRestUrl() {
@@ -85,16 +103,16 @@ public class Config {
 		this.timeoutSecs = timeoutSecs;
 	}
 
-	public String getCxEngineUrlPath() {
-		return cxEngineUrlPath;
-	}
-
 	public String getUserAgent() {
 		return userAgent;
 	}
 
 	public void setUserAgent(String userAgent) {
 		this.userAgent = userAgent;
+	}
+
+	public String getCxEngineUrlPath() {
+		return cxEngineUrlPath;
 	}
 
 	@Override
@@ -104,8 +122,10 @@ public class Config {
 				.add("cxEnginePrefix", cxEnginePrefix)
 				.add("cxEngineUrlPath", cxEngineUrlPath)
 				.add("enginePoolPrefix", enginePoolPrefix)
+				.add("idleMonitorSecs", idleMonitorSecs)
 				.add("queueCapacity", queueCapacity)
 				.add("queueIntervalSecs", queueIntervalSecs)
+				.add("queueingEngineId", queueingEngineId)
 				.add("restUrl", restUrl)
 				.add("timeoutSecs", timeoutSecs)
 				.add("userAgent", userAgent)

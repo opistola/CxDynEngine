@@ -149,8 +149,8 @@ public class AwsEc2Client implements AwsComputeClient {
 		
 			final Instance instance = waitForPendingState(instanceId, null); 
 			
-			log.info("action=startInstance; instanceId={}; requestId={}; status={}", 
-					instanceId, requestId, statusCode);
+			log.info("action=startInstance; instanceId={}; requestId={}; status={}; {}", 
+					instanceId, requestId, statusCode, Ec2.print(instance));
 			return instance;
 			
 		} catch (AmazonClientException e) {
@@ -300,7 +300,7 @@ public class AwsEc2Client implements AwsComputeClient {
 						log.info("waitForPendingState(): thread interrupted, exiting");
 						break;
 					}
-					Thread.sleep(sleepMs);
+					TimeUnit.MILLISECONDS.sleep(sleepMs);
 					instance = describe(instanceId);
 					state = Ec2.getState(instance); 
 				}

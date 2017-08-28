@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.checkmarx.engine.aws.AwsConstants;
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 import com.google.common.collect.Iterables;
@@ -40,7 +39,7 @@ public class EnginePoolTests {
 	public void setUp() throws Exception {
 		log.trace("setup()");
 
-		pool = new DefaultEnginePoolBuilder("cx-engine", AwsConstants.BILLING_INTERVAL_SECS)
+		pool = new DefaultEnginePoolBuilder("cx-engine", 300)
 			.addEntry(new EnginePoolEntry(SMALL, 3))
 			.addEntry(new EnginePoolEntry(MEDIUM, 3))
 			.addEntry(new EnginePoolEntry(LARGE, 3))
@@ -135,7 +134,7 @@ public class EnginePoolTests {
 				Iterables.getFirst(pool.getUnprovisionedEngines().get(SMALL.getName()), null);
 		final String name = e.getName();
 		
-		final DynamicEngine newEngine = new DynamicEngine(name, e.getSize(), AwsConstants.BILLING_INTERVAL_SECS);
+		final DynamicEngine newEngine = new DynamicEngine(name, e.getSize(), 300);
 		newEngine.setState(State.IDLE);
 		newEngine.setHost(new Host(name, "ip", "url", DateTime.now()));
 		assertEquals(newEngine, e);

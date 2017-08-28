@@ -1,34 +1,54 @@
 package com.checkmarx.engine.manager;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.checkmarx.engine.Config;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EnginePool;
+import com.checkmarx.engine.domain.EnginePool.IdleEngineMonitor;
 import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.rest.CxRestClient;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.rest.model.ScanRequest;
+import com.checkmarx.engine.utils.ExecutorServiceUtils;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class EngineMonitor implements Runnable {
+public class EngineManager implements Runnable {
 	
-	private static final Logger log = LoggerFactory.getLogger(EngineMonitor.class);
+	private static final Logger log = LoggerFactory.getLogger(EngineManager.class);
 
+	private final Config config;
 	private final CxRestClient cxClient;
 	private final EnginePool pool;
 	private final EngineProvisioner engineProvisioner;
 	private final BlockingQueue<ScanRequest> scansQueued;
 	private final BlockingQueue<ScanRequest> scansFinished;
 	private final BlockingQueue<DynamicEngine> enginesExpiring;
-	//private final EngineLauncher engineLauncher;
+	private final List<Future<?>> tasks = Lists.newArrayList();
+	
+	private final ExecutorService monitorExecutor;
+	private final ExecutorService scanQueuedExecutor;
+	private final ExecutorService scanFinishedExecutor;
+	private final ExecutorService engineExpiringExecutor;
+	private final ScheduledExecutorService idleEngineExecutor;
+	
+	private final static int MONITOR_THREAD_POOL_SIZE = 3;
+	//FIXME: move these to config
+	private final static int SCANS_QUEUED_THREAD_POOL_SIZE = 10;
+	private final static int SCANS_FINISHED_THREAD_POOL_SIZE = 5;
+	private final static int ENGINE_EXPIRING_THREAD_POOL_SIZE = 5;
 
 	/**
 	 * map of scans assigned to engines; key=Scan.RunId, value=cxEngineId
@@ -45,63 +65,117 @@ public class EngineMonitor implements Runnable {
 	 */
 	private Map<Long, EngineServer> activeEngines = Maps.newConcurrentMap();
 
-	public EngineMonitor(EnginePool pool, 
+	public EngineManager(
+			Config config,
+			EnginePool pool, 
 			CxRestClient cxClient,
 			EngineProvisioner engineProvisioner,
 			BlockingQueue<ScanRequest> scansQueued,
 			BlockingQueue<ScanRequest> scansFinished) {
 		this.pool = pool;
+		this.config = config;
 		this.cxClient = cxClient;
-		this.engineProvisioner = engineProvisioner;
 		this.scansQueued = scansQueued;
 		this.scansFinished = scansFinished;
 		this.enginesExpiring =  new ArrayBlockingQueue<DynamicEngine>(pool.getEngineCount());
-		//this.engineLauncher = new EngineLauncher();
+		this.engineProvisioner = engineProvisioner;
+		this.monitorExecutor = ExecutorServiceUtils.buildPooledExecutorService(MONITOR_THREAD_POOL_SIZE, "engine-mgr-%d", true);
+		this.scanQueuedExecutor = ExecutorServiceUtils.buildPooledExecutorService(SCANS_QUEUED_THREAD_POOL_SIZE, "scan-queue-%d", true);
+		this.scanFinishedExecutor = ExecutorServiceUtils.buildPooledExecutorService(SCANS_FINISHED_THREAD_POOL_SIZE, "scan-finish-%d", true);
+		this.engineExpiringExecutor = ExecutorServiceUtils.buildPooledExecutorService(ENGINE_EXPIRING_THREAD_POOL_SIZE, "engine-kill-%d", true);
+		this.idleEngineExecutor = ExecutorServiceUtils.buildScheduledExecutorService("idle-mon-%d", true);
 	}
 
 	@Override
 	public void run() {
 		log.info("run()");
 		
-		final ExecutorService launcher = Executors.newSingleThreadExecutor();
-		launcher.execute(new EngineLauncher());
-		
-		final ExecutorService terminator = Executors.newSingleThreadExecutor();
-		terminator.execute(new EngineTerminator());
+		try {
+			final IdleEngineMonitor engineMonitor = pool.createIdleEngineMonitor(this.enginesExpiring);
+			int monitorInterval = config.getIdleMonitorSecs();
+			
+			tasks.add(monitorExecutor.submit(new ScanLauncher()));
+			tasks.add(monitorExecutor.submit(new ScanFinisher()));
+			tasks.add(monitorExecutor.submit(new EngineTerminator()));
+			
+			tasks.add(idleEngineExecutor.scheduleAtFixedRate(engineMonitor, 1, monitorInterval, TimeUnit.SECONDS));
+		} catch (Throwable t) {
+			log.error("Error occurred while launching Engine processes, shutting down; cause={}; message={}", 
+					t, t.getMessage(), t); 
+			shutdown();
+		}
+	}
+	
+	public void stop() {
+		log.info("stop()");
+		shutdown();
+	}
+	
+	private void shutdown() {
+		log.info("shutdown()");
 
-		//TODO: implement background task to expire engines 
+		tasks.forEach((task) -> {
+			task.cancel(true);
+		});
+		
+		monitorExecutor.shutdown();
+		scanQueuedExecutor.shutdown();
+		scanFinishedExecutor.shutdown();
+		idleEngineExecutor.shutdown();
+		
+		try {
+			if (!monitorExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				monitorExecutor.shutdownNow();
+			}
+			if (!scanQueuedExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				scanQueuedExecutor.shutdownNow();
+			}
+			if (!scanFinishedExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				scanFinishedExecutor.shutdownNow();
+			}
+			if (!idleEngineExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				idleEngineExecutor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			monitorExecutor.shutdownNow();
+			scanQueuedExecutor.shutdownNow();
+			scanFinishedExecutor.shutdownNow();
+			idleEngineExecutor.shutdownNow();
+		}
 	}	
-	public class EngineLauncher implements Runnable {
+	public class ScanLauncher implements Runnable {
+		
+		private final Logger log = LoggerFactory.getLogger(EngineManager.ScanLauncher.class);
 
 		@Override
 		public void run() {
-			log.info("EngineLauncher.run()");
+			log.info("run()");
 			
+			int scanCount = 0;
 			try {
 				registerQueuingEngine();
 				while (true) {
-					// blocks until scan available
-					log.debug("EngineLauncher: waiting for scan");
-					ScanRequest scan = scansQueued.take();
-					Runnable task = new Runnable() {
-						@Override
-						public void run() {
-							onScanQueued(scan);
-						}
-					};
+					log.debug("ScanLauncher: waiting for scan");
 					
-					final ExecutorService executor = Executors.newSingleThreadExecutor();
-					executor.execute(task);
+					// blocks until scan available
+					ScanRequest scan = scansQueued.take();
+					scanCount++;
+					
+					// add task to thread pool
+					scanQueuedExecutor.execute(()-> onScanQueued(scan));
 				}
 			} catch (InterruptedException e) {
-				log.info("EngineLauncher interrupted: message={}", e.getMessage());
+				log.info("ScanLauncher interrupted");
+			} finally {
+				log.info("ScanLauncher exiting; scanCount={}", scanCount);
 			}
 		}
 		
 		public void registerQueuingEngine() {
 			log.debug("registerQueueEngine()");
 			
-			EngineServer engine = cxClient.getEngine(1L);
+			final long engineId = config.getQueueingEngineId();
+			EngineServer engine = cxClient.getEngine(engineId);
 			engine.setBlocked(true);
 			engine = cxClient.updateEngine(engine);
 			
@@ -153,7 +227,6 @@ public class EngineMonitor implements Runnable {
 
 			// blocks while engine is spinning up
 			engineProvisioner.launch(engine, size, true);
-			
 			registerEngine(scan, engine, state);
 			return true;
 		}
@@ -203,29 +276,30 @@ public class EngineMonitor implements Runnable {
 
 	}
 
-	public class EngineTerminator implements Runnable {
+	public class ScanFinisher implements Runnable {
+		
+		private final Logger log = LoggerFactory.getLogger(EngineManager.ScanFinisher.class);
 
 		@Override
 		public void run() {
-			log.info("EngineTerminator.run()");
+			log.info("run()");
 			
+			int scanCount = 0;
 			try {
 				while (true) {
-					// blocks until scan available
-					log.debug("EngineTerminator: waiting for scan");
+					log.trace("ScanFinisher: waiting for scan...");
+					
+					// blocks until scan is finished
 					ScanRequest scan = scansFinished.take();
-					Runnable task = new Runnable() {
-						@Override
-						public void run() {
-							onScanFinished(scan);
-						}
-
-					};
-					Thread t = new Thread(task);
-					t.start();
+					scanCount++;
+					
+					// add task to thread pool
+					scanFinishedExecutor.execute(()-> onScanFinished(scan));
 				}
 			} catch (InterruptedException e) {
-				log.info("EngineTerminator interrupted: message={}", e.getMessage());
+				log.info("ScanFinisher interrupted");
+			} finally {
+				log.info("ScanFinisher exiting; scanCount={}", scanCount);
 			}
 
 		}
@@ -236,13 +310,51 @@ public class EngineMonitor implements Runnable {
 			final String runId = scan.getRunId(); 
 			final Long engineId = engineScans.get(runId);
 			final DynamicEngine engine = cxEngines.get(engineId);
+			
 			cxClient.unregisterEngine(engineId);
-			pool.deallocateEngine(engine);
-			engineProvisioner.stop(engine);
+			engine.setState(State.IDLE);
+			
 			engineScans.remove(runId);
 			cxEngines.remove(engineId);
+
+			/*
+			pool.deallocateEngine(engine);
+			engineProvisioner.stop(engine);
+			*/
 			
-			log.info("Engine deallocated for scan: engine={}; scan={}", engine, scan);
+			log.info("Scan finished, engine removed: engine={}; scan={}", engine, scan);
+		}
+		
+	}
+	
+	public class EngineTerminator implements Runnable {
+		
+		private final Logger log = LoggerFactory.getLogger(EngineManager.EngineTerminator.class);
+
+		@Override
+		public void run() {
+			log.info("run()");
+			
+			try {
+				while (true) {
+					//blocks until engine expires
+					log.trace("EngineTerminator: waiting for event...");
+					final DynamicEngine engine = enginesExpiring.take();
+
+					engineExpiringExecutor.execute(()-> stopEngine(engine));
+				}
+			} catch (InterruptedException e) {
+				log.info("EngineTerminator interrupted");
+			}
+		}
+		
+		private void stopEngine(DynamicEngine engine) {
+			log.debug("stopEngine(): {}", engine);
+			
+			pool.deallocateEngine(engine);
+			engineProvisioner.stop(engine);
+
+			log.info("Idle engine expired, engine deallocated: engine={}", engine);
 		}
 		
 	}

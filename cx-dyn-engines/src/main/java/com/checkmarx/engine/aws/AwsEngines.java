@@ -12,9 +12,7 @@ import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.util.StringUtils;
-import com.checkmarx.engine.aws.Ec2.InstanceState;
 import com.checkmarx.engine.domain.DynamicEngine;
-import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
 import com.checkmarx.engine.manager.EngineProvisioner;
@@ -121,10 +119,9 @@ public class AwsEngines implements EngineProvisioner {
 	DynamicEngine buildDynamicEngine(String name, Instance instance) {
 		final String size = lookupEngineSize(instance);
 		final DateTime launchTime = new DateTime(instance.getLaunchTime());
-		final boolean isRunning = 
-				InstanceState.from(instance.getState().getCode()).equals(InstanceState.RUNNING);
+		final boolean isRunning = Ec2.isRunning(instance);
 		final DynamicEngine engine = DynamicEngine.fromProvisionedInstance(
-				name, size, AwsConstants.BILLING_INTERVAL_SECS,
+				name, size, config.getEngineExpireIntervalSecs(),
 				launchTime, isRunning);
 		if (isRunning) {
 			engine.setHost(createHost(name, instance));
@@ -186,7 +183,7 @@ public class AwsEngines implements EngineProvisioner {
 			if (waitForSpinup) {
 				pingEngine(host);
 			}
-			engine.setState(State.IDLE);
+			//engine.setState(State.IDLE);
 			success = true;
 		} catch (Throwable e) {
 			log.error("Error occurred while launching AWS EC2 instance; name={}; {}", name, engine, e);
@@ -212,7 +209,7 @@ public class AwsEngines implements EngineProvisioner {
 		log.debug("stop() : {}", engine);
 
 		final String name = engine.getName();
-		final Instance instance = provisionedEngines.get(name);
+		Instance instance = provisionedEngines.get(name);
 		if (instance == null) {
 			throw new RuntimeException("Cannot stop engine, no instance found");
 		}
@@ -223,13 +220,16 @@ public class AwsEngines implements EngineProvisioner {
 		final Stopwatch timer = Stopwatch.createStarted();
 		try {
 			
-			if (config.isTerminateOnStop() || forceTerminate) {
+			if (config.isTerminateOnStop() || forceTerminate) {	
 				action = "TerminatedEngine";
 				ec2Client.terminate(instanceId);
-				engine.setState(State.UNPROVISIONED);
+				provisionedEngines.remove(name);
+				//engine.setState(State.UNPROVISIONED);
 			} else {
 				ec2Client.stop(instanceId);
-				engine.setState(State.IDLE);
+				instance = ec2Client.describe(instanceId);
+				provisionedEngines.put(name, instance);
+				//engine.setState(State.IDLE);
 			}
 			success = true;
 			
@@ -266,7 +266,7 @@ public class AwsEngines implements EngineProvisioner {
 			pingTask.execute(() -> {
 				while (!cxClient.pingEngine(host.getMonitorUrl())) {
 					log.trace("Engine ping failed, waiting to retry; {}; sleep={}ms", host, pollingMillis); 
-					Thread.sleep(pollingMillis);
+					TimeUnit.MILLISECONDS.sleep(pollingMillis);
 				}
 				return true;
 			});

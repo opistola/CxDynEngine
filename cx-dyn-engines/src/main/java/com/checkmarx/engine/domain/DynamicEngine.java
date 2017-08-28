@@ -37,7 +37,7 @@ public class DynamicEngine {
 	private DateTime timeToExpire;
 	private Host host;
 	private Map<State, Duration> elapsedTimes = Maps.newConcurrentMap();
-	private final int expireDurationSecs;
+	private final long expireDurationSecs;
 	private DateTime launchTime;
 	private String scanRunId;
 	private EnginePool enginePool;
@@ -46,11 +46,11 @@ public class DynamicEngine {
 		this.enginePool = enginePool;
 	}
 
-	public DynamicEngine(String name, String size, int expireDurationSecs) {
+	public DynamicEngine(String name, String size, long expireDurationSecs) {
 		this(name, size, expireDurationSecs, null);
 	}
 	
-	public DynamicEngine(String name, String size, int expireDurationSecs, EnginePool enginePool) {
+	public DynamicEngine(String name, String size, long expireDurationSecs, EnginePool enginePool) {
 		this.name = name;
 		this.size = size;
 		this.expireDurationSecs = expireDurationSecs;
@@ -59,7 +59,7 @@ public class DynamicEngine {
 	}
 	
 	public static DynamicEngine fromProvisionedInstance(
-			String name, String size, int expireDurationSecs,
+			String name, String size, long expireDurationSecs,
 			DateTime launchTime, boolean isRunning) {
 		final DynamicEngine engine = new DynamicEngine(name, size, expireDurationSecs);
 		engine.launchTime = launchTime;
@@ -129,7 +129,7 @@ public class DynamicEngine {
 			if (host != null && host.getLaunchTime() != null) {
 				launchTime = host.getLaunchTime();
 			}
-			timeToExpire = launchTime.plusSeconds(this.expireDurationSecs);
+			//timeToExpire = launchTime.plusSeconds(Math.toIntExact(this.expireDurationSecs));
 		}
 
 		// update state
@@ -157,8 +157,9 @@ public class DynamicEngine {
 	
 	DateTime calcExpirationTime() {
 		final Duration runTime = getRunTime();
-		Long factor = Math.floorMod(runTime.getStandardSeconds(), expireDurationSecs) + 1;
-		return launchTime.plusSeconds(factor.intValue() * expireDurationSecs);
+		Long factor = Math.floorDiv(runTime.getStandardSeconds(), expireDurationSecs) + 1;
+		// set the expiration time 2 minutes before the next interval increment
+		return launchTime.plusSeconds(factor.intValue() * Math.toIntExact(expireDurationSecs));
 	}
 
 	/**
@@ -180,6 +181,7 @@ public class DynamicEngine {
 
 	public void setHost(Host server) {
 		this.host = server;
+		this.launchTime = server.getLaunchTime();
 	}
 	
 	public String printElapsedTimes() {

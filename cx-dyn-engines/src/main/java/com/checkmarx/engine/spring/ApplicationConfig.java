@@ -4,13 +4,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.checkmarx.engine.Config;
-import com.checkmarx.engine.aws.AwsConstants;
+import com.checkmarx.engine.aws.AwsEngineConfig;
 import com.checkmarx.engine.domain.DefaultEnginePoolBuilder;
 import com.checkmarx.engine.domain.EnginePool;
 import com.checkmarx.engine.domain.ScanQueue;
 import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
-import com.checkmarx.engine.manager.EngineMonitor;
+import com.checkmarx.engine.manager.EngineManager;
 import com.checkmarx.engine.manager.EngineProvisioner;
 import com.checkmarx.engine.manager.QueueMonitor;
 import com.checkmarx.engine.rest.CxRestClient;
@@ -19,9 +19,9 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 @Configuration
 public class ApplicationConfig {
 	
-	public static final EngineSize SMALL = new EngineSize("S", 0, 99999);
-	public static final EngineSize MEDIUM = new EngineSize("M", 100000, 499999);
-	public static final EngineSize LARGE = new EngineSize("L", 500000, 999999999);
+	public static final EngineSize SMALL = new EngineSize("S", 0, 19999);
+	public static final EngineSize MEDIUM = new EngineSize("M", 20000, 99999);
+	public static final EngineSize LARGE = new EngineSize("L", 100000, 999999999);
 	
 	@Bean
 	public JodaModule jacksonJodaModule() {
@@ -39,10 +39,10 @@ public class ApplicationConfig {
 	}
 	
 	@Bean
-	public EnginePool enginePool(Config config) {
+	public EnginePool enginePool(Config config, AwsEngineConfig awsConfig) {
 		//TODO: add configurable engine pool entries
 		return new DefaultEnginePoolBuilder(config.getEnginePoolPrefix(), 
-				AwsConstants.BILLING_INTERVAL_SECS)
+				awsConfig.getEngineExpireIntervalSecs())
 			.addEntry(new EnginePoolEntry(SMALL, 3))
 			.addEntry(new EnginePoolEntry(MEDIUM, 3))
 			.addEntry(new EnginePoolEntry(LARGE, 3))
@@ -50,21 +50,20 @@ public class ApplicationConfig {
 	}
 	
 	@Bean
-	public EngineMonitor engineMonitor(EnginePool enginePool,
+	public EngineManager engineMonitor(
+			Config config,
+			EnginePool enginePool,
 			CxRestClient cxClient,
-			EngineProvisioner engineProvisioner, Config config,
+			EngineProvisioner engineProvisioner,
 			ScanQueue scansQueued, ScanQueue scansFinished) {
 		
-		return new EngineMonitor(enginePool, cxClient, engineProvisioner, 
+		return new EngineManager(config, enginePool, cxClient, engineProvisioner, 
 						scansQueued.getQueue(), scansFinished.getQueue());
 	}
 	
 	@Bean
-	public QueueMonitor queueMonitor(CxRestClient cxClient, Config config,
+	public QueueMonitor queueMonitor(CxRestClient cxClient,
 			ScanQueue scansQueued, ScanQueue scansFinished) {
-		//final ScanQueue scansQueued = new ScanQueue(config.getQueueCapacity());
-		//final ScanQueue scansFinished = new ScanQueue(config.getQueueCapacity());
-		
 		return new QueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient);
 	}
 	

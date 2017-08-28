@@ -4,6 +4,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,20 +32,27 @@ public class EngineServiceTests {
 	public void setUp() throws Exception {
 		log.trace("setup()");
 
-		Assume.assumeTrue(runTest);
-
 		assertThat(service, is(notNullValue()));
 	}
 	
 	@Test
-	public void test() throws Exception {
-		log.trace("test()");
+	public void testRun() throws Exception {
+		log.trace("testRun()");
 		
-		Assume.assumeTrue(runTest);
+		//Assume.assumeTrue(runTest);
 
 		service.run();
+		TimeUnit.MINUTES.sleep(20);
+		service.stop();
+	}
+
+	@Test
+	public void testShutdown() throws Exception {
+		log.trace("testShutdown()");
 		
-		Thread.sleep(10*60*1000);  // 10 mins
+		service.run();
+		TimeUnit.SECONDS.sleep(5);
+		service.stop();
 	}
 
 }

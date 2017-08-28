@@ -17,9 +17,9 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 	private final Set<DynamicEngine> engines = Sets.newHashSet();
 	
 	private final String engineNamePrefix;
-	private final int expirationIntervalSecs;
+	private final long expirationIntervalSecs;
 	
-	public DefaultEnginePoolBuilder(String engineNamePrefix, int expirationIntervalSecs) {
+	public DefaultEnginePoolBuilder(String engineNamePrefix, long expirationIntervalSecs) {
 		this.engineNamePrefix = engineNamePrefix;
 		this.expirationIntervalSecs = expirationIntervalSecs;
 	}
