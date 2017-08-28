@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -91,6 +92,10 @@ public class EnginePool {
 		engine.setEnginePool(this);
 	}
 	
+	public int getEngineCount() {
+		return allNamedEngines.size();
+	}
+
 	public DynamicEngine getEngineByName(String name) {
 		return allNamedEngines.get(name);
 	}
@@ -107,8 +112,8 @@ public class EnginePool {
 		return activeEngines;
 	}
 
-	Map<String, Set<DynamicEngine>> getIdleEngines() {
-		return idleEngines;
+	public ImmutableMap<String, Set<DynamicEngine>> getIdleEngines() {
+		return null;
 	}
 
 	Map<String, Set<DynamicEngine>> getExpiringEngines() {
@@ -184,7 +189,6 @@ public class EnginePool {
 			log.debug("Engine allocated: pool={}", this);
 			return engine;
 		}
-		
 	}
 	
 	public void deallocateEngine(DynamicEngine engine) {

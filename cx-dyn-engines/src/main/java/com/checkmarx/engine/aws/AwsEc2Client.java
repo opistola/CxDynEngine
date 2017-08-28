@@ -87,9 +87,12 @@ public class AwsEc2Client implements AwsComputeClient {
 			success = true;
 			return instance;
 			
-		} catch (AmazonClientException e) {
-			log.warn("Failed to launch EC2 instance; name={}; cause={}", name, e.getMessage());
-			throw new RuntimeException("Failed to launch EC2 instance", e);
+		} catch (Throwable t) {
+			log.warn("Failed to launch EC2 instance; name={}; cause={}; message={}", name, t, t.getMessage());
+			if (instance != null) {
+				safeTerminate(instance.getInstanceId());
+			}
+			throw new RuntimeException("Failed to launch EC2 instance", t);
 		} finally {
 			log.info("action={}, success={}; elapsedTime={}s; {}; requestId={}", 
 					"launchInstance", success, timer.elapsed(TimeUnit.SECONDS), Ec2.print(instance), requestId);
@@ -151,7 +154,8 @@ public class AwsEc2Client implements AwsComputeClient {
 			return instance;
 			
 		} catch (AmazonClientException e) {
-			log.warn("Failed to start EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			log.warn("Failed to start EC2 instance; instanceId={}; cause={}; message={}", 
+					instanceId, e, e.getMessage());
 			throw new RuntimeException("Failed to start EC2 instance", e);
 		}
 	}
@@ -171,7 +175,8 @@ public class AwsEc2Client implements AwsComputeClient {
 			log.info("action=stopInstance; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
 		} catch (AmazonClientException e) {
-			log.warn("Failed to stop EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			log.warn("Failed to stop EC2 instance; instanceId={}; cause={}; message={}", 
+					instanceId, e, e.getMessage());
 			throw new RuntimeException("Failed to stop EC2 instance", e);
 		}
 	}
@@ -191,8 +196,20 @@ public class AwsEc2Client implements AwsComputeClient {
 			log.info("action=terminateInstance; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
 		} catch (AmazonClientException e) {
-			log.warn("Failed to terminate EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			log.warn("Failed to terminate EC2 instance; instanceId={}; cause={}; message={}", 
+					instanceId, e, e.getMessage());
 			throw new RuntimeException("Failed to terminate EC2 instance", e);
+		}
+	}
+	
+	private void safeTerminate(String instanceId) {
+		log.trace("safeTerminate(): instanceId={}", instanceId);
+		try {
+			terminate(instanceId);
+		} catch (Throwable t) {
+			// log and swallow
+			log.warn("Error during safeTerminate; instanceId={}; cause={}; message={}", 
+					instanceId, t, t.getMessage());
 		}
 	}
 	
@@ -221,7 +238,7 @@ public class AwsEc2Client implements AwsComputeClient {
 			
 			return allInstances;
 		} catch (AmazonClientException e) {
-			log.warn("Failed to find EC2 instances; cause={}", e.getMessage());
+			log.warn("Failed to find EC2 instances; cause={}; message={}", e, e.getMessage());
 			throw new RuntimeException("Failed to find EC2 instances", e);
 		}
 	}
@@ -246,19 +263,22 @@ public class AwsEc2Client implements AwsComputeClient {
 			
 			return instance;
 		} catch (AmazonClientException e) {
-			log.warn("Failed to describe EC2 instance; instanceId={}; cause={}", instanceId, e.getMessage());
+			log.warn("Failed to describe EC2 instance; instanceId={}; cause={}; message={}", 
+					instanceId, e, e.getMessage());
 			throw new RuntimeException("Failed to describe EC2 instance", e);
 		}
 	}
 	
 	/**
-	 * Calls describe until instance state is not Pending, and optionally is not the state
-	 * supplied.  Times out after <code>config.getStatusTimeoutSec()</code>.
+	 * Calls <code>describe</code> until instance <code>state</code> is not Pending, 
+	 * and optionally is not the state supplied.
+	 * <br/><br/>  
+	 * Times out after <code>config.getLaunchTimeoutSec()</code>.
 	 * 
 	 * @param instanceId
 	 * @param skipState state to avoid, can be null
 	 * @return instance or <null/> if not valid
-	 * @throws RuntimeException if unable to determine status in the alloted timeout
+	 * @throws RuntimeException if unable to determine status before timeout
 	 */
 	private Instance waitForPendingState(String instanceId, InstanceState skipState) {
 		log.trace("waitForPendingState() : instanceId={}; skipState={}", instanceId, skipState);
@@ -276,6 +296,10 @@ public class AwsEc2Client implements AwsComputeClient {
 				while (state.equals(InstanceState.PENDING) || state.equals(skipState)) {
 					log.trace("state={}, waiting to refresh; instanceId={}; sleep={}ms", 
 							state, instanceId, sleepMs); 
+					if (Thread.currentThread().isInterrupted()) {
+						log.info("waitForPendingState(): thread interrupted, exiting");
+						break;
+					}
 					Thread.sleep(sleepMs);
 					instance = describe(instanceId);
 					state = Ec2.getState(instance); 
@@ -285,11 +309,11 @@ public class AwsEc2Client implements AwsComputeClient {
 		} catch (TimeoutException e) {
 			log.warn("Failed to determine instance state due to timeout; instanceId={}; message={}", 
 					instanceId, e.getMessage());
-			throw new RuntimeException("Timed out waiting for instance state", e);
-		} catch (Exception e) {
+			throw new RuntimeException("Timeout waiting for instance state", e);
+		} catch (Throwable t) {
 			log.warn("Failed to determine instance state; instanceId={}; cause={}; message={}", 
-					instanceId, e.getCause(), e.getMessage());
-			throw new RuntimeException("Failed to determine instance state", e);
+					instanceId, t, t.getMessage());
+			throw new RuntimeException("Failed to determine instance state", t);
 		}
 	}
 	

@@ -1,6 +1,7 @@
 package com.checkmarx.engine.manager;
 
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +27,7 @@ public class EngineMonitor implements Runnable {
 	private final EngineProvisioner engineProvisioner;
 	private final BlockingQueue<ScanRequest> scansQueued;
 	private final BlockingQueue<ScanRequest> scansFinished;
+	private final BlockingQueue<DynamicEngine> enginesExpiring;
 	//private final EngineLauncher engineLauncher;
 
 	/**
@@ -53,6 +55,7 @@ public class EngineMonitor implements Runnable {
 		this.engineProvisioner = engineProvisioner;
 		this.scansQueued = scansQueued;
 		this.scansFinished = scansFinished;
+		this.enginesExpiring =  new ArrayBlockingQueue<DynamicEngine>(pool.getEngineCount());
 		//this.engineLauncher = new EngineLauncher();
 	}
 

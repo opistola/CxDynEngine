@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Uses an single threaded ExecutorService to perform a task with a timeout.
+ * NOTE: This blocks the calling thread.  Do not use for asynchronous tasks.
  * 
  * @author randy@checkmarx.com
  *
@@ -36,7 +37,20 @@ public class TimeoutTask<T> {
 		log.trace("execute(): task={}; timeout={}; timeUnit={}", taskName, timeout, timeUnit);
 		final ExecutorService executor = Executors.newSingleThreadExecutor();
 		final Future<T> future = executor.submit(task);
-		return future.get(timeout, timeUnit);
+		try {
+			return future.get(timeout, timeUnit);
+		} catch (TimeoutException e) {
+			log.warn("TimeoutException during TimeoutTask; task={}", taskName);
+			future.cancel(true);
+			throw e;
+		} catch (ExecutionException e) {
+			final Throwable t = e.getCause();
+			log.warn("ExecutionException during TimeoutTask; task={}; cause={}; message={}", 
+					taskName, t, t.getMessage());
+			throw e;
+		} finally {
+			executor.shutdownNow();
+		}
 	}
 	
 }
