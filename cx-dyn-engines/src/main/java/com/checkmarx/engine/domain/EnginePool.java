@@ -1,8 +1,22 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Checkmarx
+ * 
+ * This software is licensed for customer's internal use only.
+ *  
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ ******************************************************************************/
 package com.checkmarx.engine.domain;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.joda.time.DateTime;
@@ -234,22 +248,23 @@ public class EnginePool {
 		
 		private final Logger log = LoggerFactory.getLogger(EnginePool.IdleEngineMonitor.class);
 		
-		private final BlockingQueue<DynamicEngine> expiringEngines;
+		private final BlockingQueue<DynamicEngine> expiredEnginesQueue;
 
-		public IdleEngineMonitor(BlockingQueue<DynamicEngine> expiringEngines) {
-			this.expiringEngines = expiringEngines;
+		public IdleEngineMonitor(BlockingQueue<DynamicEngine> expiredEnginesQueue) {
+			this.expiredEnginesQueue = expiredEnginesQueue;
 		}
 
 		@Override
 		public void run() {
 			log.trace("run()");
 			
+			AtomicInteger count = new AtomicInteger(0);
+			
 			// loop thru IDLE engines looking for expiration
 			idleEngines.forEach((size, engines) -> {
 				
 				engines.forEach((engine) -> {
 					try {
-						int count = 0;
 						final DateTime expireTime = engine.getTimeToExpire();
 						log.trace("Checking idle engine: name={}; expireTime={}", 
 								engine.getName(), expireTime);
@@ -258,15 +273,15 @@ public class EnginePool {
 
 						// give us 2 minutes buffer to expire
 						if (expireTime.minusMinutes(2).isBeforeNow()) {
-							count++;
+							count.incrementAndGet();
 							engine.setState(State.EXPIRING);
-							expiringEngines.put(engine);
+							expiredEnginesQueue.put(engine);
 						}
-						log.debug("Expiring engine count={}", count);
 					} catch (InterruptedException e) {
 						log.info("EngineMonitor interrupted");
 					}
 				}); 
+				log.debug("Expiring engine count={}", count.get());
 			});
 		}
 		

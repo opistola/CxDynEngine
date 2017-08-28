@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Checkmarx
+ * 
+ * This software is licensed for customer's internal use only.
+ *  
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ ******************************************************************************/
 package com.checkmarx.engine.manager;
 
 import java.util.List;
@@ -33,16 +46,16 @@ public class EngineManager implements Runnable {
 	private final CxRestClient cxClient;
 	private final EnginePool pool;
 	private final EngineProvisioner engineProvisioner;
-	private final BlockingQueue<ScanRequest> scansQueued;
-	private final BlockingQueue<ScanRequest> scansFinished;
-	private final BlockingQueue<DynamicEngine> enginesExpiring;
-	private final List<Future<?>> tasks = Lists.newArrayList();
+	private final BlockingQueue<ScanRequest> queuedScansQueue;
+	private final BlockingQueue<ScanRequest> finshedScansQueue;
+	private final BlockingQueue<DynamicEngine> expiredEnginesQueue;
 	
 	private final ExecutorService monitorExecutor;
 	private final ExecutorService scanQueuedExecutor;
 	private final ExecutorService scanFinishedExecutor;
 	private final ExecutorService engineExpiringExecutor;
 	private final ScheduledExecutorService idleEngineExecutor;
+	private final List<Future<?>> tasks = Lists.newArrayList();
 	
 	private final static int MONITOR_THREAD_POOL_SIZE = 3;
 	//FIXME: move these to config
@@ -75,9 +88,9 @@ public class EngineManager implements Runnable {
 		this.pool = pool;
 		this.config = config;
 		this.cxClient = cxClient;
-		this.scansQueued = scansQueued;
-		this.scansFinished = scansFinished;
-		this.enginesExpiring =  new ArrayBlockingQueue<DynamicEngine>(pool.getEngineCount());
+		this.queuedScansQueue = scansQueued;
+		this.finshedScansQueue = scansFinished;
+		this.expiredEnginesQueue =  new ArrayBlockingQueue<DynamicEngine>(pool.getEngineCount());
 		this.engineProvisioner = engineProvisioner;
 		this.monitorExecutor = ExecutorServiceUtils.buildPooledExecutorService(MONITOR_THREAD_POOL_SIZE, "engine-mgr-%d", true);
 		this.scanQueuedExecutor = ExecutorServiceUtils.buildPooledExecutorService(SCANS_QUEUED_THREAD_POOL_SIZE, "scan-queue-%d", true);
@@ -91,7 +104,7 @@ public class EngineManager implements Runnable {
 		log.info("run()");
 		
 		try {
-			final IdleEngineMonitor engineMonitor = pool.createIdleEngineMonitor(this.enginesExpiring);
+			final IdleEngineMonitor engineMonitor = pool.createIdleEngineMonitor(this.expiredEnginesQueue);
 			int monitorInterval = config.getIdleMonitorSecs();
 			
 			tasks.add(monitorExecutor.submit(new ScanLauncher()));
@@ -142,7 +155,8 @@ public class EngineManager implements Runnable {
 			scanFinishedExecutor.shutdownNow();
 			idleEngineExecutor.shutdownNow();
 		}
-	}	
+	}
+	
 	public class ScanLauncher implements Runnable {
 		
 		private final Logger log = LoggerFactory.getLogger(EngineManager.ScanLauncher.class);
@@ -158,7 +172,7 @@ public class EngineManager implements Runnable {
 					log.debug("ScanLauncher: waiting for scan");
 					
 					// blocks until scan available
-					ScanRequest scan = scansQueued.take();
+					ScanRequest scan = queuedScansQueue.take();
 					scanCount++;
 					
 					// add task to thread pool
@@ -290,7 +304,7 @@ public class EngineManager implements Runnable {
 					log.trace("ScanFinisher: waiting for scan...");
 					
 					// blocks until scan is finished
-					ScanRequest scan = scansFinished.take();
+					ScanRequest scan = finshedScansQueue.take();
 					scanCount++;
 					
 					// add task to thread pool
@@ -317,11 +331,6 @@ public class EngineManager implements Runnable {
 			engineScans.remove(runId);
 			cxEngines.remove(engineId);
 
-			/*
-			pool.deallocateEngine(engine);
-			engineProvisioner.stop(engine);
-			*/
-			
 			log.info("Scan finished, engine removed: engine={}; scan={}", engine, scan);
 		}
 		
@@ -337,9 +346,10 @@ public class EngineManager implements Runnable {
 			
 			try {
 				while (true) {
-					//blocks until engine expires
 					log.trace("EngineTerminator: waiting for event...");
-					final DynamicEngine engine = enginesExpiring.take();
+
+					//blocks until an engine expires
+					final DynamicEngine engine = expiredEnginesQueue.take();
 
 					engineExpiringExecutor.execute(()-> stopEngine(engine));
 				}
