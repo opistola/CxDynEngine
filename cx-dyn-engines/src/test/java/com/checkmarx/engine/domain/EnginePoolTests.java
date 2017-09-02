@@ -152,7 +152,7 @@ public class EnginePoolTests {
 		newEngine.setHost(new Host(name, "ip", "url", DateTime.now()));
 		assertEquals(newEngine, e);
 		
-		final DynamicEngine oldEngine = pool.replaceEngine(newEngine);
+		final DynamicEngine oldEngine = pool.addExistingEngine(newEngine);
 		log.debug("old: {}", oldEngine);
 		log.debug("new: {}", newEngine);
 

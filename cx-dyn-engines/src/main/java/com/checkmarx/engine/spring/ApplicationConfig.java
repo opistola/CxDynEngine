@@ -25,7 +25,7 @@ import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 import com.checkmarx.engine.manager.EngineManager;
 import com.checkmarx.engine.manager.EngineProvisioner;
-import com.checkmarx.engine.manager.QueueMonitor;
+import com.checkmarx.engine.manager.ScanQueueMonitor;
 import com.checkmarx.engine.rest.CxRestClient;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
@@ -75,9 +75,9 @@ public class ApplicationConfig {
 	}
 	
 	@Bean
-	public QueueMonitor queueMonitor(CxRestClient cxClient,
+	public ScanQueueMonitor queueMonitor(CxRestClient cxClient,
 			ScanQueue scansQueued, ScanQueue scansFinished) {
-		return new QueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient);
+		return new ScanQueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient);
 	}
 	
 	/*

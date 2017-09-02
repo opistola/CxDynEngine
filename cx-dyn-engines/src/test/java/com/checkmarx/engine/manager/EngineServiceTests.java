@@ -35,8 +35,8 @@ public class EngineServiceTests {
 	
 	private static final Logger log = LoggerFactory.getLogger(EngineServiceTests.class);
 
-	private final boolean runTest = false;  //uncomment next line to run this test
-	//private final boolean runTest = true;
+	//private final boolean runTest = false;  //uncomment next line to run this test
+	private final boolean runTest = true;
 
 	@Autowired
 	private EngineService service;
@@ -52,10 +52,10 @@ public class EngineServiceTests {
 	public void testRun() throws Exception {
 		log.trace("testRun()");
 		
-		//Assume.assumeTrue(runTest);
+		Assume.assumeTrue(runTest);
 
 		service.run();
-		TimeUnit.MINUTES.sleep(20);
+		TimeUnit.MINUTES.sleep(60);
 		service.stop();
 	}
 

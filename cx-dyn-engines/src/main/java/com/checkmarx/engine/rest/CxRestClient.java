@@ -118,7 +118,7 @@ public class CxRestClient {
 			log.warn("Cx rest call failed: request={}; status={}; {}", operation, e.getRawStatusCode(), error);
 			throw e;
 		} finally {
-			log.debug("Cx api call; request={}; success={}; elapsed={}", 
+			log.debug("Cx api call; request={}; success={}; elapsed={}ms", 
 					operation, success, timer.elapsed(TimeUnit.MILLISECONDS)); 
 		}
 	}

@@ -151,8 +151,8 @@ public class EnginePool {
 	 * @param newEngine to add
 	 * @return the old engine that was replaced
 	 */
-	public DynamicEngine replaceEngine(DynamicEngine newEngine) {
-		log.info("replaceEngine(): {}", newEngine);
+	public DynamicEngine addExistingEngine(DynamicEngine newEngine) {
+		log.trace("addExistingEngine(): {}", newEngine);
 		
 		final String name = newEngine.getName();
 		final String size = newEngine.getSize();
@@ -166,6 +166,8 @@ public class EnginePool {
 		engineMaps.get(curState).get(size).remove(curEngine);
 		
 		addEngine(newEngine);
+		
+		log.info("action=addExistingEngine; {}", newEngine);
 		return curEngine;
 	}
 
@@ -281,7 +283,7 @@ public class EnginePool {
 						log.info("EngineMonitor interrupted");
 					}
 				}); 
-				log.debug("Expiring engine count={}", count.get());
+				log.debug("Expiring engines: size={}; count={}", size, count.get());
 			});
 		}
 		

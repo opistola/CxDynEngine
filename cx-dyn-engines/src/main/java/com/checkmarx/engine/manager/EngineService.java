@@ -39,23 +39,23 @@ public class EngineService implements Runnable {
 	private final Config config;
 	private final EnginePool enginePool;
 	private final EngineProvisioner engineProvisioner;
-	private final QueueMonitor queueMonitor;
-	private final EngineManager engineController;
+	private final ScanQueueMonitor scanQueueMonitor;
+	private final EngineManager engineManager;
 
-	private final ExecutorService monitorExecutor;
-	private final ScheduledExecutorService queueExecutor;
+	private final ExecutorService engineManagerExecutor;
+	private final ScheduledExecutorService scanQueueExecutor;
 	private final List<Future<?>> tasks = Lists.newArrayList();
 
 	public EngineService(CxRestClient cxClient, EngineProvisioner engineProvisioner, Config config,
-			QueueMonitor queueMonitor, EngineManager engineMonitor, EnginePool enginePool) {
+			ScanQueueMonitor scanQueueMonitor, EngineManager engineManager, EnginePool enginePool) {
 		this.cxClient = cxClient;
 		this.config = config;
 		this.engineProvisioner = engineProvisioner;
-		this.queueMonitor = queueMonitor;
-		this.engineController = engineMonitor;
+		this.scanQueueMonitor = scanQueueMonitor;
+		this.engineManager = engineManager;
 		this.enginePool = enginePool;
-		this.monitorExecutor = ExecutorServiceUtils.buildSingleThreadExecutorService("eng-service-%d", true);
-		this.queueExecutor = ExecutorServiceUtils.buildScheduledExecutorService("queue-mon-%d", true);
+		this.engineManagerExecutor = ExecutorServiceUtils.buildSingleThreadExecutorService("eng-service-%d", true);
+		this.scanQueueExecutor = ExecutorServiceUtils.buildScheduledExecutorService("queue-mon-%d", true);
 		
 		log.info("ctor(): {}; {}; {}", this.enginePool, this.cxClient, this.config);
 	}
@@ -64,13 +64,17 @@ public class EngineService implements Runnable {
 	public void run() {
 		log.info("run()");
 	
+		final int pollingInterval = config.getQueueIntervalSecs();
 		try {
 		
 			cxClient.login();
 			updateEngines();
 
-			tasks.add(monitorExecutor.submit(engineController));
-			tasks.add(queueExecutor.scheduleAtFixedRate(queueMonitor, 0L, config.getQueueIntervalSecs(), TimeUnit.SECONDS));
+			log.info("Launching EngineManager...");
+			tasks.add(engineManagerExecutor.submit(engineManager));
+			
+			log.info("Launching ScanQueueMonitor; pollingInterval={}s", pollingInterval);
+			tasks.add(scanQueueExecutor.scheduleAtFixedRate(scanQueueMonitor, 0L, pollingInterval, TimeUnit.SECONDS));
 
 		} catch (Throwable t) {
 			log.error("Error occurred while launching Engine services, shutting down; cause={}; message={}", 
@@ -87,23 +91,23 @@ public class EngineService implements Runnable {
 	private void shutdown() {
 		log.info("shutdown()");
 
-		engineController.stop();
+		engineManager.stop();
 		
 		tasks.forEach((task) -> {
 			task.cancel(true);
 		});
-		monitorExecutor.shutdown();
-		queueExecutor.shutdown();
+		engineManagerExecutor.shutdown();
+		scanQueueExecutor.shutdown();
 		try {
-			if (!monitorExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-				monitorExecutor.shutdownNow();
+			if (!engineManagerExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				engineManagerExecutor.shutdownNow();
 			}
-			if (!queueExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-				queueExecutor.shutdownNow();
+			if (!scanQueueExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				scanQueueExecutor.shutdownNow();
 			}
 		} catch (InterruptedException e) {
-			monitorExecutor.shutdownNow();
-			queueExecutor.shutdownNow();
+			engineManagerExecutor.shutdownNow();
+			scanQueueExecutor.shutdownNow();
 		}
 	}
 	
@@ -115,7 +119,7 @@ public class EngineService implements Runnable {
 			final String name = engine.getName();
 			final DynamicEngine existingEngine = enginePool.getEngineByName(name);
 			if (existingEngine != null) {
-				enginePool.replaceEngine(engine);
+				enginePool.addExistingEngine(engine);
 			} else {
 				// terminate unknown engines
 				engineProvisioner.stop(engine, true);

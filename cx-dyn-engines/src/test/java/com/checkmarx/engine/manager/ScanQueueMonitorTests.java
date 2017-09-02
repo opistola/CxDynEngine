@@ -35,15 +35,15 @@ import com.checkmarx.engine.rest.CxRestClient;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class QueueMonitorTests {
+public class ScanQueueMonitorTests {
 	
-	private static final Logger log = LoggerFactory.getLogger(QueueMonitorTests.class);
+	private static final Logger log = LoggerFactory.getLogger(ScanQueueMonitorTests.class);
 
-	private final boolean runTest = false;  //uncomment next line to run this test
-	//private final boolean runTest = true;
+	//private final boolean runTest = false;  //uncomment next line to run this test
+	private final boolean runTest = true;
 
 	@Autowired
-	private QueueMonitor monitor;
+	private ScanQueueMonitor monitor;
 	
 	@Autowired
 	private CxRestClient cxClient;
@@ -66,7 +66,9 @@ public class QueueMonitorTests {
 		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 		service.scheduleAtFixedRate(monitor, 0L, 5, TimeUnit.SECONDS);
 		
-		Thread.sleep(5*60*1000);
+		TimeUnit.MINUTES.sleep(10);
+		
+		service.shutdownNow();
 	}
 	
 }

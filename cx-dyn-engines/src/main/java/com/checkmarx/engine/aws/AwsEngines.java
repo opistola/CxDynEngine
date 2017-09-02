@@ -278,7 +278,7 @@ public class AwsEngines implements EngineProvisioner {
 		try {
 			pingTask.execute(() -> {
 				while (!cxClient.pingEngine(host.getMonitorUrl())) {
-					log.trace("Engine ping failed, waiting to retry; {}; sleep={}ms", host, pollingMillis); 
+					log.trace("Engine ping failed, waiting to retry; sleep={}ms; {}", pollingMillis, host); 
 					TimeUnit.MILLISECONDS.sleep(pollingMillis);
 				}
 				return true;

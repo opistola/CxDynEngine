@@ -205,13 +205,17 @@ public class EngineManager implements Runnable {
 				return;
 			}
 			
-			if (allocateIdleEngine(scan, size)) return;
+			//TODO: check engine licensing for concurrent scan limit, limit scans launched
+			
+			if (allocateIdleEngine(size, scan)) return;
 			
 			if (checkActiveEngines(scan, size)) return;
 			
-			if (allocateNewEngine(scan, size)) return;
+			if (allocateNewEngine(size, scan)) return;
+			
+			//TODO: add error handling for failed launch, try/catch and retry
 
-			log.debug("No engine available for scan: scan={}", scan);
+			log.warn("No engine available for scan: scan={}", scan);
 
 		}
 
@@ -219,20 +223,20 @@ public class EngineManager implements Runnable {
 			return pool.calcEngineSize(scan.getLoc());
 		}
 
-		private boolean allocateIdleEngine(ScanRequest scan, EngineSize size) {
-			log.trace("allocateIdleEngine() : {}; size={}", scan, size);
+		private boolean allocateIdleEngine(EngineSize size, ScanRequest scan) {
+			log.trace("allocateIdleEngine(): size={}; {}", size, scan);
 
 			final State state = State.IDLE;
 			final DynamicEngine engine = pool.allocateEngine(size, state);
 			
 			if (engine == null) return false;
 			
-			registerEngine(scan, engine, state);
+			registerEngine(state, scan, engine);
 			return true;
 		}
 		
-		private boolean allocateNewEngine(ScanRequest scan, EngineSize size) {
-			log.trace("allocateNewEngine() : {}; size={}", scan, size);
+		private boolean allocateNewEngine(EngineSize size, ScanRequest scan) {
+			log.trace("allocateNewEngine(): size={}; {}", scan, size);
 
 			final State state = DynamicEngine.State.UNPROVISIONED;
 			final DynamicEngine engine = pool.allocateEngine(size, state);
@@ -241,12 +245,12 @@ public class EngineManager implements Runnable {
 
 			// blocks while engine is spinning up
 			engineProvisioner.launch(engine, size, true);
-			registerEngine(scan, engine, state);
+			registerEngine(state, scan, engine);
 			return true;
 		}
 		
-		private void registerEngine(ScanRequest scan, DynamicEngine engine, State fromState) {
-			log.trace("registerEngine() : {}; {}; fromState={}", scan, engine, fromState);
+		private void registerEngine(State fromState, ScanRequest scan, DynamicEngine engine) {
+			log.trace("registerEngine(): fromState={}; {}; {}", fromState, scan, engine);
 			
 			final String id = scan.getRunId();
 			EngineServer cxEngine = createEngine(engine.getName(), scan, engine.getUrl());  
@@ -271,8 +275,7 @@ public class EngineManager implements Runnable {
 		}
 
 		private EngineServer createEngine(String name, ScanRequest scan, String url) {
-			//FIXME: pull from config
-			final String prefix = "**";
+			final String prefix = config.getCxEnginePrefix(); //"**";
 			final String engineName = String.format("%s%s", prefix, name);
 			final int size = scan.getLoc(); 
 			return new EngineServer(engineName, url, size, size, 1, false);

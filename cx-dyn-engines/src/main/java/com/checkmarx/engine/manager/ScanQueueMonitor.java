@@ -25,16 +25,16 @@ import com.checkmarx.engine.rest.model.ScanRequest;
 import com.checkmarx.engine.rest.model.ScanRequest.ScanStatus;
 import com.google.common.collect.Maps;
 
-public class QueueMonitor implements Runnable {
+public class ScanQueueMonitor implements Runnable {
 	
-	private static final Logger log = LoggerFactory.getLogger(QueueMonitor.class);
+	private static final Logger log = LoggerFactory.getLogger(ScanQueueMonitor.class);
 
 	private final BlockingQueue<ScanRequest> scanQueued;
 	private final BlockingQueue<ScanRequest> scanFinished;
 	private final Map<Long,ScanRequest> scans = Maps.newHashMap();
 	private final CxRestClient cxClient;
 	
-	public QueueMonitor(BlockingQueue<ScanRequest> scanQueued, BlockingQueue<ScanRequest> scanFinished,
+	public ScanQueueMonitor(BlockingQueue<ScanRequest> scanQueued, BlockingQueue<ScanRequest> scanFinished,
 			CxRestClient cxClient) {
 		this.scanQueued = scanQueued;
 		this.scanFinished = scanFinished;
@@ -50,13 +50,13 @@ public class QueueMonitor implements Runnable {
 	}
 
 	private void checkScanStatus(ScanRequest scan) {
-		log.trace("checkScanStatus(): {}", scan);
+		log.debug("checkScanStatus(): {}", scan);
 		
-		if (isNewScan(scan)) {
+		if (isScanQueued(scan)) {
 			scanQueued.add(scan);
 			scans.put(scan.getId(), scan);
 			log.info("Scan queued: {}; queuedCount={}", scan, scanQueued.size());
-		} else if (isFinishedScan(scan)) {
+		} else if (isScanComplete(scan)) {
 			scanFinished.add(scan);
 			scans.remove(scan.getId());
 			log.info("Scan finished: {}; queuedCount={}", scan, scanQueued.size());
@@ -65,14 +65,14 @@ public class QueueMonitor implements Runnable {
 		}
 	}
 
-	private boolean isNewScan(ScanRequest scan) {
-		log.trace("isNewScan(): {}", scan);
-		return !scans.containsKey(scan.getId()) && isQueued(scan.getStatus());
+	private boolean isScanQueued(ScanRequest scan) {
+		log.trace("isScanQueued(): {}", scan);
+		return isQueued(scan.getStatus()) && !scans.containsKey(scan.getId());
 	}
 	
-	private boolean isFinishedScan(ScanRequest scan) {
-		log.trace("isFinishedScan(): {}", scan);
-		return scans.containsKey(scan.getId()) && isDone(scan.getStatus());
+	private boolean isScanComplete(ScanRequest scan) {
+		log.trace("isScanComplete(): {}", scan);
+		return isDone(scan.getStatus()) && scans.containsKey(scan.getId());
 	}
 
 	private boolean isDone(ScanStatus status) {
