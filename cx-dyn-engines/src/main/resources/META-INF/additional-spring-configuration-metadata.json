@@ -123,5 +123,10 @@
     "name": "cx.engineExpireIntervalSecs",
     "type": "java.lang.String",
     "description": "A description for 'cx.engineExpireIntervalSecs'"
+  },
+  {
+    "name": "cx.queueCapacity",
+    "type": "java.lang.String",
+    "description": "A description for 'cx.queueCapacity'"
   }
 ]}

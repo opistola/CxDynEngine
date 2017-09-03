@@ -15,6 +15,7 @@ package com.checkmarx.engine.spring;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.annotation.EnableRetry;
 
 import com.checkmarx.engine.Config;
 import com.checkmarx.engine.aws.AwsEngineConfig;
@@ -30,6 +31,7 @@ import com.checkmarx.engine.rest.CxRestClient;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 @Configuration
+@EnableRetry
 public class ApplicationConfig {
 	
 	public static final EngineSize SMALL = new EngineSize("S", 0, 19999);

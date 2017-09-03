@@ -201,7 +201,7 @@ public class CxRestClient {
 	}
 	
 	public EngineServer updateEngine(EngineServer engine) {
-		log.trace("updateEngine() : {}", engine);
+		log.trace("updateEngine(): {}", engine);
 		
 		final long id = engine.getId();
 		final String url = buildEngineUrl(id);
@@ -212,6 +212,30 @@ public class CxRestClient {
 		return getEngine(id);
 	}
 	
+	public EngineServer blockEngine(long engineId) {
+		log.trace("blockEngine(): engineId={}", engineId);
+		
+		final EngineServer engine = getEngine(engineId);
+		if (engine == null) return null;
+		
+		if (engine.isBlocked()) return engine;
+		
+		engine.setBlocked(true);
+		return updateEngine(engine);
+	}
+
+	public EngineServer unblockEngine(long engineId) {
+		log.trace("unblockEngine(): engineId={}", engineId);
+		
+		final EngineServer engine = getEngine(engineId);
+		if (engine == null) return null;
+		
+		if (!engine.isBlocked()) return engine;
+		
+		engine.setBlocked(false);
+		return updateEngine(engine);
+	}
+
 	public List<ScanRequest> getScansQueue() {
 		log.trace("getScansQueue()");
 		
@@ -264,4 +288,5 @@ public class CxRestClient {
 				.add("config", config)
 				.toString();
 	}
+
 }

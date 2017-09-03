@@ -52,7 +52,7 @@ public class DynamicEngine {
 	private Map<State, Duration> elapsedTimes = Maps.newConcurrentMap();
 	private final long expireDurationSecs;
 	private DateTime launchTime;
-	private String scanRunId;
+	private Long scanId;
 	private EnginePool enginePool;
 
 	public void setEnginePool(EnginePool enginePool) {
@@ -207,12 +207,12 @@ public class DynamicEngine {
 		return sb.toString().replaceAll(", $", "");
 	}
 
-	public String getScanRunId() {
-		return scanRunId;
+	public Long getScanId() {
+		return scanId;
 	}
 
-	public void setScanRunId(String scanRunId) {
-		this.scanRunId = scanRunId;
+	public void setScanId(Long scanId) {
+		this.scanId = scanId;
 	}
 
 	// name and size are only immutable properties
@@ -243,7 +243,7 @@ public class DynamicEngine {
 				.add("currentStateTime", currentStateTime)
 				.add("expireDurationSecs", expireDurationSecs)
 				.add("timeToExpire", timeToExpire)
-				.add("scanRunId", scanRunId)
+				.add("scanId", scanId)
 				.add("host", host)
 				.add("elapsedTimes", "[" + printElapsedTimes() + "]")
 				//.omitNullValues()

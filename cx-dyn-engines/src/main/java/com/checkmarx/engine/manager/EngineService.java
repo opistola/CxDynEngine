@@ -27,6 +27,7 @@ import com.checkmarx.engine.Config;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.EnginePool;
 import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.utils.ExecutorServiceUtils;
 import com.google.common.collect.Lists;
 
@@ -67,8 +68,7 @@ public class EngineService implements Runnable {
 		final int pollingInterval = config.getQueueIntervalSecs();
 		try {
 		
-			cxClient.login();
-			updateEngines();
+			initialize();
 
 			log.info("Launching EngineManager...");
 			tasks.add(engineManagerExecutor.submit(engineManager));
@@ -82,7 +82,47 @@ public class EngineService implements Runnable {
 			shutdown();
 		}
 	}
+
+	private void initialize() {
+		log.trace("initialize()");
+		
+		log.info("Logging into CxManager; cxManagerUrl={}, user={}", config.getRestUrl(), config.getUserName()); 
+		if (!cxClient.login()) {
+			throw new RuntimeException("Unable to login to CxManager");
+		}
+		
+		updateHostedEngines();
+		checkCxEngines();
+	}
 	
+	/**
+	 * Checks registered engines, removes idle dynamic engines
+	 */
+	private void checkCxEngines() {
+		log.debug("checkCxEngines()");
+		try {
+			final List<EngineServer> engines = cxClient.getEngines();
+			engines.forEach((engine) -> {
+				boolean isDynamic = isDynamicEngine(engine);
+				log.info("CxEngine found; engine={}; active={}; isDynamic={}", 
+						engine.getName(), isDynamic);
+				if (isDynamic) {
+					//FIXME: once the engine API supports engine state, add active engines to registered engine list
+					// for now, unregister any dynamic engines found
+					log.warn("Dynamic engine found, unregistering; engine={}; {}", engine.getName(), engine);
+					cxClient.unregisterEngine(engine.getId());
+				}
+			});
+		} catch (Exception e) {
+			// log and swallow
+			log.error("Unable to unregister engine; cause={}; message={}", e, e.getMessage(), e); 
+		}
+	}
+
+	private boolean isDynamicEngine(EngineServer engine) {
+		return engine.getName().startsWith(config.getCxEnginePrefix());
+	}
+
 	public void stop() {
 		log.info("stop()");
 		shutdown();
@@ -111,7 +151,7 @@ public class EngineService implements Runnable {
 		}
 	}
 	
-	private void updateEngines() {
+	private void updateHostedEngines() {
 		log.debug("updateEngines()");
 
 		final List<DynamicEngine> provisionedEngines = engineProvisioner.listEngines();
