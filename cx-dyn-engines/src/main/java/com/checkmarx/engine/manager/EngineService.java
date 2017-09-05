@@ -86,7 +86,7 @@ public class EngineService implements Runnable {
 	private void initialize() {
 		log.trace("initialize()");
 		
-		log.info("Logging into CxManager; cxManagerUrl={}, user={}", config.getRestUrl(), config.getUserName()); 
+		log.info("Logging into CxManager; url={}, user={}", config.getRestUrl(), config.getUserName()); 
 		if (!cxClient.login()) {
 			throw new RuntimeException("Unable to login to CxManager");
 		}
@@ -104,8 +104,8 @@ public class EngineService implements Runnable {
 			final List<EngineServer> engines = cxClient.getEngines();
 			engines.forEach((engine) -> {
 				boolean isDynamic = isDynamicEngine(engine);
-				log.info("CxEngine found; engine={}; active={}; isDynamic={}", 
-						engine.getName(), isDynamic);
+				log.info("CxEngine found; engine={}; isAlive={}; isBlocked=(); isDynamic={}", 
+						engine.getName(), engine.isAlive(), engine.isBlocked(), isDynamic);
 				if (isDynamic) {
 					//FIXME: once the engine API supports engine state, add active engines to registered engine list
 					// for now, unregister any dynamic engines found
@@ -115,7 +115,7 @@ public class EngineService implements Runnable {
 			});
 		} catch (Exception e) {
 			// log and swallow
-			log.error("Unable to unregister engine; cause={}; message={}", e, e.getMessage(), e); 
+			log.error("Error while checking CxEngines; cause={}; message={}", e, e.getMessage(), e); 
 		}
 	}
 
@@ -152,7 +152,7 @@ public class EngineService implements Runnable {
 	}
 	
 	private void updateHostedEngines() {
-		log.debug("updateEngines()");
+		log.debug("updateHostedEngines()");
 
 		final List<DynamicEngine> provisionedEngines = engineProvisioner.listEngines();
 		provisionedEngines.forEach((engine) -> {

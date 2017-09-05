@@ -21,6 +21,7 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
@@ -31,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -61,6 +64,11 @@ public class AwsEngineConfigTests {
 		final Map<String, String> sizeMap = config.getEngineSizeMap();
 		assertThat(sizeMap, notNullValue());
 		assertThat(sizeMap.values(), hasSize(greaterThan(0)));
+		
+		final List<EnginePoolEntry> pool = config.getPool();
+		assertThat(pool, notNullValue());
+		assertThat(pool.isEmpty(), is(false));
+		
 	}
 
 }

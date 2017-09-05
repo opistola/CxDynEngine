@@ -291,8 +291,12 @@ public class EnginePool {
 	
 	public static class EnginePoolEntry {
 		
-		private final EngineSize scanSize;
-		private final int count;
+		private EngineSize scanSize;
+		private int count;
+		
+		public EnginePoolEntry() {
+			// for Spring
+		}
 		
 		public EnginePoolEntry(EngineSize scanSize, int count) {
 			this.scanSize = scanSize;
@@ -307,6 +311,14 @@ public class EnginePool {
 			return count;
 		}
 		
+		public void setScanSize(EngineSize scanSize) {
+			this.scanSize = scanSize;
+		}
+
+		public void setCount(int count) {
+			this.count = count;
+		}
+
 		@Override
 		public String toString() {
 			return MoreObjects.toStringHelper(this)

@@ -1,9 +1,12 @@
 [X] Add host IP aws config (usePublicUrlForCxEngine, usePrivateUrlForSpinUp)
 [X] Leave engines running until expiration time
-[ ] Add engine pool config
 [X] Check registered engines, unregister idle dyn engines
+[X] Block engine after scan is working
+[X] Add engine pool config
+[ ] Handle no available engines
+[ ] Add max concurrent scans
 [ ] Populate active scan map from running engines
 [ ] Add scan run id tag
-[X] Block engine after scan is working
 [ ] Clean up logging
 [ ] Refactor EngineService/EngineMonitor class structure
+[ ] Add ec2 post launch script 

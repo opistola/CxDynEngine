@@ -105,7 +105,8 @@ public class ScanQueueMonitor implements Runnable {
 			activeScans.put(scanId, scan);
 
 			//scanWorking.add(scan);
-			//FIXME: move to EngineManager
+			//FIXME: move block engine to EngineManager by posting to a queue
+			//scanWorking.add(scan);
 			final long engineId = scan.getEngineId();
 			log.info("Scan is working, blocking engine; scanId={}; engineId={}", scanId, engineId);
 			cxClient.blockEngine(engineId);

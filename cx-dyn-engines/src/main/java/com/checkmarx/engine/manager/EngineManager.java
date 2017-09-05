@@ -358,10 +358,6 @@ public class EngineManager implements Runnable {
 			cxClient.unregisterEngine(engineId);
 		}
 
-		/**
-		 * @param scan
-		 * @return
-		 */
 		private Long determineEngineId(ScanRequest scan) {
 			final Long scanEngineId = scan.getEngineId();
 			log.trace("determineEngineId(): scanId={}; engineId={}", scan.getId(), scanEngineId);

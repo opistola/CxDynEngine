@@ -18,10 +18,14 @@ import com.google.common.base.Objects;
 
 public class EngineSize {
 	
-	private final String name;
-	private final long minLOC;
-	private final long maxLOC;
+	private String name;
+	private long minLOC;
+	private long maxLOC;
 	
+	public EngineSize() {
+		// for spring
+	}
+
 	public EngineSize(String name, int minLOC, int maxLOC) {
 		this.name = name;
 		this.minLOC = minLOC;
@@ -38,6 +42,18 @@ public class EngineSize {
 
 	public long getMaxLOC() {
 		return maxLOC;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setMinLOC(long minLOC) {
+		this.minLOC = minLOC;
+	}
+
+	public void setMaxLOC(long maxLOC) {
+		this.maxLOC = maxLOC;
 	}
 
 	public boolean isMatch(long loc) {

@@ -34,10 +34,6 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 @EnableRetry
 public class ApplicationConfig {
 	
-	public static final EngineSize SMALL = new EngineSize("S", 0, 19999);
-	public static final EngineSize MEDIUM = new EngineSize("M", 20000, 99999);
-	public static final EngineSize LARGE = new EngineSize("L", 100000, 999999999);
-	
 	@Bean
 	public JodaModule jacksonJodaModule() {
 		return new JodaModule();
@@ -55,13 +51,13 @@ public class ApplicationConfig {
 	
 	@Bean
 	public EnginePool enginePool(Config config, AwsEngineConfig awsConfig) {
-		//TODO: add configurable engine pool entries
-		return new DefaultEnginePoolBuilder(config.getEnginePoolPrefix(), 
-				awsConfig.getEngineExpireIntervalSecs())
-			.addEntry(new EnginePoolEntry(SMALL, 3))
-			.addEntry(new EnginePoolEntry(MEDIUM, 3))
-			.addEntry(new EnginePoolEntry(LARGE, 3))
-			.build();
+		final DefaultEnginePoolBuilder builder = new DefaultEnginePoolBuilder(
+				config.getEnginePoolPrefix(), 
+				awsConfig.getEngineExpireIntervalSecs());
+		awsConfig.getPool().forEach((entry) -> {
+			builder.addEntry(entry);
+		});
+		return builder.build();
 	}
 	
 	@Bean
@@ -82,19 +78,4 @@ public class ApplicationConfig {
 		return new ScanQueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient);
 	}
 	
-	/*
-	@Bean
-	public EnginePool enginePool() {
-		final ScanSize small = new ScanSize("S", 0, 99999);
-		final List<DynamicEngine> engines = Lists.newArrayList();
-		engines.add(new DynamicEngine("aws-cxengine-small-1", small));
-		engines.add(new DynamicEngine("aws-cxengine-small-2", small));
-		return new EnginePool(engines);
-	}
-	
-	@Bean
-	public BlockingQueue<ScanEvent> scanQueue() {
-		return new ArrayBlockingQueue<ScanEvent>(1000, true);
-	}
-	*/
 }
