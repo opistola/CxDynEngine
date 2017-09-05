@@ -1,0 +1,14 @@
+v0.4.0
+    - Added EnginePool configuration to application.properties (AwsEngineConfig)
+    
+v0.3.0
+    - Fixed several race conditions and issues
+    - block engines after scan is working
+    - added limited retry capability for failed engine unregister
+    - cleaned up logging
+
+v0.2.0
+    - code review release
+
+v0.1.0
+    - initial functional implementation
