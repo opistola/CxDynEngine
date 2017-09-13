@@ -63,6 +63,10 @@ public class ScanRequest {
 		public static ScanStatus from(Stage stage) {
 			return stage == null ? ScanStatus.Unknown : from(stage.getId());
 		}
+		
+		public static Stage to(ScanStatus status) {
+			return new Stage(status.stageId, status.name());
+		}
 	}
 	
 	private static final String TZ = "America/Chicago";
@@ -89,7 +93,27 @@ public class ScanRequest {
 	private String origin;
 
 	public ScanRequest() {
+		// default .ctor
+	}
 
+	public ScanRequest(long id, String runId, String teamId, Project project, Stage stage, Long engineId, 
+			Integer loc, boolean incremental, boolean isPublic, String origin,
+			ProgramLanguage[] languages, DateTime dateCreated, DateTime queuedOn, DateTime engineStartedOn
+			) {
+		this.id = id;
+		this.runId = runId;
+		this.stage = stage;
+		this.teamId = teamId;
+		this.project = project;
+		this.engineId = engineId;
+		this.loc = loc;
+		this.languages = languages;
+		this.dateCreated = dateCreated;
+		this.queuedOn = queuedOn;
+		this.engineStartedOn = engineStartedOn;
+		this.incremental = incremental;
+		this.isPublic = isPublic;
+		this.origin = origin;
 	}
 
 	/**

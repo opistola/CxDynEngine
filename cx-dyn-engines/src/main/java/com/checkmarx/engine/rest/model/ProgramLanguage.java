@@ -24,6 +24,11 @@ public class ProgramLanguage {
 		// default .ctor for unmarshalling
 	}
 	
+	public ProgramLanguage(long id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
 	public long getId() {
 		return id;
 	}
