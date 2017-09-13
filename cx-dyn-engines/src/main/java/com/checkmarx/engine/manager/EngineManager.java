@@ -200,7 +200,7 @@ public class EngineManager implements Runnable {
 		public void onScanQueued(ScanRequest scan) {
 			log.debug("onScanQueued() : {}", scan);
 
-			final EngineSize size = calcScanSize(scan);
+			final EngineSize size = calcEngineSize(scan);
 			if (size == null) {
 				log.error("Invalid scan size; {}", scan); 
 				return;
@@ -214,12 +214,12 @@ public class EngineManager implements Runnable {
 			
 			if (allocateNewEngine(size, scan)) return;
 			
-			//TODO: add error handling for failed launch, try/catch and retry
+			//TODO: add retry logic for failed launch, try/catch and retry
 
 			log.warn("No engine available for scan: scan={}", scan);
 		}
 
-		private EngineSize calcScanSize(ScanRequest scan) {
+		private EngineSize calcEngineSize(ScanRequest scan) {
 			return pool.calcEngineSize(scan.getLoc());
 		}
 
@@ -257,8 +257,6 @@ public class EngineManager implements Runnable {
 			cxEngine = registerCxEngine(scanId, cxEngine);
 			
 			trackEngineScan(scan, cxEngine, dynEngine);
-			//cxEngines.put(cxEngine.getId(), dynEngine);
-			//engineScans.put(scanId, engineId);
 
 			log.info("Engine allocated for scan: fromState={}; engine={}; scan={}", fromState, dynEngine, scan);
 		}

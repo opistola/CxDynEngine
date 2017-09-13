@@ -24,6 +24,11 @@ public class Stage {
 		// default .ctor for unmarshalling
 	}
 	
+	public Stage(long id, String value) {
+		this.id = id;
+		this.value = value;
+	}
+
 	public long getId() {
 		return id;
 	}

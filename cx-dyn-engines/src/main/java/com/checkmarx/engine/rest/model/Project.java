@@ -24,6 +24,11 @@ public class Project {
 		// default .ctor for unmarshalling
 	}
 	
+	public Project(long id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
 	public long getId() {
 		return id;
 	}
