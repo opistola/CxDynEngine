@@ -20,12 +20,13 @@ import com.google.common.base.MoreObjects;
 
 @Component
 @ConfigurationProperties(prefix="cx")
-public class Config {
+public class CxConfig {
 	
 	private final String cxEngineUrlPath = "/CxSourceAnalyzerEngineWCF/CxEngineWebServices.svc";
 	
 	private String userName;
 	private String password;
+	private int concurrentScanLimit;
 	private String cxEnginePrefix = "**";
 	private String enginePoolPrefix = "cx-engine";
 	private int idleMonitorSecs = 15;
@@ -50,6 +51,14 @@ public class Config {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public int getConcurrentScanLimit() {
+		return concurrentScanLimit;
+	}
+
+	public void setConcurrentScanLimit(int concurrentScanLimit) {
+		this.concurrentScanLimit = concurrentScanLimit;
 	}
 
 	public String getCxEnginePrefix() {
@@ -132,6 +141,7 @@ public class Config {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("userName", userName)
+				.add("concurrentScanLimit", concurrentScanLimit)
 				.add("cxEnginePrefix", cxEnginePrefix)
 				.add("cxEngineUrlPath", cxEngineUrlPath)
 				.add("enginePoolPrefix", enginePoolPrefix)

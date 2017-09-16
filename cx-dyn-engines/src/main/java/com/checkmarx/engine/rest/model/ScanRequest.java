@@ -19,7 +19,6 @@ import java.util.Objects;
 
 import org.joda.time.DateTime;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -69,8 +68,8 @@ public class ScanRequest {
 		}
 	}
 	
-	private static final String TZ = "America/Chicago";
-	private static final String DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+	//private static final String TZ = "America/Chicago";
+	//private static final String DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
 	private long id;
 	private String runId;
@@ -80,11 +79,11 @@ public class ScanRequest {
 	private Long engineId;
 	private Integer loc;
 	private ProgramLanguage[] languages;
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
+	//@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
 	private DateTime dateCreated;
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
+	//@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
 	private DateTime queuedOn;
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
+	//@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
 	private DateTime engineStartedOn;
 	@JsonProperty(value = "isIncremental")
 	private boolean incremental;

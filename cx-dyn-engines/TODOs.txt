@@ -1,10 +1,14 @@
+Defects
+[ ] ScanRequest dates may fail if they don't contain 3 millisec digits
+
+Features
 [X] Add host IP aws config (usePublicUrlForCxEngine, usePrivateUrlForSpinUp)
 [X] Leave engines running until expiration time
 [X] Check registered engines, unregister idle dyn engines
 [X] Block engine after scan is working
 [X] Add engine pool config
+[X] Add max concurrent scans
 [ ] Handle no available engines
-[ ] Add max concurrent scans
 [ ] Populate active scan map from running engines
 [ ] Add scan run id tag
 [ ] Clean up logging

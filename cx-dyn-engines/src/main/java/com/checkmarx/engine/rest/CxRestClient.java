@@ -34,7 +34,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.checkmarx.engine.Config;
+import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.rest.model.EngineServerResponse;
 import com.checkmarx.engine.rest.model.Login;
@@ -55,13 +55,13 @@ public class CxRestClient {
 	private static final String ENGINES_API_URL = BASE_URL + "/sast/engineServers";
 	private static final String SCAN_REQUESTS_URL = BASE_URL + "/sast/scansQueue";
 	
-	private final Config config;
+	private final CxConfig config;
 	private final int timeoutMillis;
 
 	private final RestTemplate sastClient;
 	private final RestTemplate engineClient;
 
-	public CxRestClient(RestTemplateBuilder restTemplateBuilder, Config config) {
+	public CxRestClient(RestTemplateBuilder restTemplateBuilder, CxConfig config) {
 		this.config = config;
 		this.timeoutMillis = config.getTimeoutSecs() * 1000;
 		

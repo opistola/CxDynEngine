@@ -3,7 +3,7 @@ TRACE_MODELER_FILE_FORMAT 2
 # Created with Trace Modeler v1.6.11
 
 ENCODING UTF-8
-TIMESTAMP 2017/09/12 23:04:24:104
+TIMESTAMP 2017/09/13 01:23:12:085
 
 # diagram style
 LIFELINE_SPACING 140
@@ -31,10 +31,10 @@ DIAGRAM_FRAME "sd dyn-engines"
 # targets
 OBJECT target0 "EngineService"
 OBJECT target1 "Engine\nManager"
-OBJECT target5 "Scan\nLauncher"
-OBJECT target3 "ScanQueued\nQueue"
-OBJECT target6 "Scan\nFinisher"
-OBJECT target2 "ScanFinished\nQueue"
+ACTIVE_OBJECT target5 "Scan\nLauncher"
+DATABASE target3 "ScanQueued\nQueue"
+ACTIVE_OBJECT target6 "Scan\nFinisher"
+DATABASE target2 "ScanFinished\nQueue"
 OBJECT target7 "Engine\nProvisioner"
 BOUNDARY target4 "CxManager\nEngine API"
 

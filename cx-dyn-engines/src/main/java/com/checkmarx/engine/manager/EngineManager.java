@@ -28,7 +28,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.web.client.HttpClientErrorException;
 
-import com.checkmarx.engine.Config;
+import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EnginePool;
@@ -45,7 +45,7 @@ public class EngineManager implements Runnable {
 	
 	private static final Logger log = LoggerFactory.getLogger(EngineManager.class);
 
-	private final Config config;
+	private final CxConfig config;
 	private final CxRestClient cxClient;
 	private final EnginePool pool;
 	private final EngineProvisioner engineProvisioner;
@@ -82,7 +82,7 @@ public class EngineManager implements Runnable {
 	private Map<Long, EngineServer> activeEngines = Maps.newConcurrentMap();
 
 	public EngineManager(
-			Config config,
+			CxConfig config,
 			EnginePool pool, 
 			CxRestClient cxClient,
 			EngineProvisioner engineProvisioner,

@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.checkmarx.engine.Config;
+import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.EnginePool;
 import com.checkmarx.engine.rest.CxRestClient;
@@ -37,7 +37,7 @@ public class EngineService implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(EngineService.class);
 
 	private final CxRestClient cxClient;
-	private final Config config;
+	private final CxConfig config;
 	private final EnginePool enginePool;
 	private final EngineProvisioner engineProvisioner;
 	private final ScanQueueMonitor scanQueueMonitor;
@@ -47,7 +47,7 @@ public class EngineService implements Runnable {
 	private final ScheduledExecutorService scanQueueExecutor;
 	private final List<Future<?>> tasks = Lists.newArrayList();
 
-	public EngineService(CxRestClient cxClient, EngineProvisioner engineProvisioner, Config config,
+	public EngineService(CxRestClient cxClient, EngineProvisioner engineProvisioner, CxConfig config,
 			ScanQueueMonitor scanQueueMonitor, EngineManager engineManager, EnginePool enginePool) {
 		this.cxClient = cxClient;
 		this.config = config;

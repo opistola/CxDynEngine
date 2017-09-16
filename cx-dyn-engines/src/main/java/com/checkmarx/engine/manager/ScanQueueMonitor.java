@@ -16,10 +16,12 @@ package com.checkmarx.engine.manager;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.rest.CxRestClient;
 import com.checkmarx.engine.rest.model.ScanRequest;
 import com.google.common.collect.Lists;
@@ -36,29 +38,45 @@ public class ScanQueueMonitor implements Runnable {
 	/**
 	 * Map of active scan requests by Scan.Id
 	 */
-	private final Map<Long,ScanRequest> activeScans = Maps.newHashMap();
+	private final Map<Long,ScanRequest> activeScanMap = Maps.newHashMap();
 	private final List<Long> workingScans = Lists.newArrayList();
 	private final CxRestClient cxClient;
+	//private final CxConfig config;
+	private final int concurrentScanLimit;
+	private final AtomicInteger concurrentScans = new AtomicInteger(0);
 	
 	public ScanQueueMonitor(
 			BlockingQueue<ScanRequest> scanQueued, 
 			//BlockingQueue<ScanRequest> scanWorking,
 			BlockingQueue<ScanRequest> scanFinished,
-			CxRestClient cxClient) {
+			CxRestClient cxClient,
+			CxConfig config) {
+		log.info("ctor(): {}", config);
+		
 		this.scanQueued = scanQueued;
 		//this.scanWorking = scanWorking;
 		this.scanFinished = scanFinished;
 		this.cxClient = cxClient;
+		//this.config = config;
+		this.concurrentScanLimit = config.getConcurrentScanLimit();
 	}
 
 	@Override
 	public void run() {
-		log.debug("run()");
+		log.trace("run()");
 		
-		final List<ScanRequest> queue = cxClient.getScansQueue();
-		queue.forEach((scan) -> processScan(scan)); 
+		try {
+			final List<ScanRequest> queue = cxClient.getScansQueue();
+			log.debug("action=getScansQueue; scanCount={}", queue.size());
+			// TODO: order list before processing, process finished scans first
+			queue.forEach((scan) -> processScan(scan));
+
+			//TODO: check for missing scans and treat as finished
+		} catch (Throwable t) {
+			log.error("Error occurred while polling scan queue, cause={}; message={}", 
+					t, t.getMessage(), t); 
+		}
 		
-		//TODO: check for missing scans and treat as finished
 	}
 
 	private void processScan(ScanRequest scan) {
@@ -66,7 +84,7 @@ public class ScanQueueMonitor implements Runnable {
 		
 		final long scanId = scan.getId();
 		switch (scan.getStatus()) {
-			case Queued:
+			case Queued :
 				onQueued(scanId, scan);
 				break;
 			case Scanning :
@@ -87,22 +105,32 @@ public class ScanQueueMonitor implements Runnable {
 	private void onQueued(final long scanId, ScanRequest scan) {
 		log.trace("onQueued(): {}", scan);
 
-		if (!activeScans.containsKey(scanId)) {
-			log.debug("scan queued, adding to scanQueued queue; id={}", scanId);
-			scanQueued.add(scan);
-			log.trace("scan added to scanQueued; count={}; id={}", scanQueued.size(), scanId);
-			activeScans.put(scanId, scan);
-			log.info("Scan queued: {}; queuedCount={}", scan, scanQueued.size());
+		// skip if we've already processed scan
+		if (activeScanMap.containsKey(scanId)) {
+			return;
 		}
+			
+		// skip if at concurrent scan limit
+		if (concurrentScans.get() >= concurrentScanLimit) {
+			log.debug("At concurrent scan limit, defering scan...");
+			return;
+		}
+
+		log.debug("scan queued, adding to scanQueued queue; id={}", scanId);
+		final int count = concurrentScans.incrementAndGet();
+		scanQueued.add(scan);
+		activeScanMap.put(scanId, scan);
+		log.info("Scan queued: {}; concurrentCount={}; concurrentLimit={}", 
+				scan, count, concurrentScanLimit);
 	}
 
 	private void onScanning(final long scanId, ScanRequest scan) {
 		log.trace("onScanning(): {}", scan);
 
 		// only process working scans once, so we add to workingScans after processing
-		if (activeScans.containsKey(scanId) && !workingScans.contains(scanId)) {
+		if (activeScanMap.containsKey(scanId) && !workingScans.contains(scanId)) {
 			// update active scan
-			activeScans.put(scanId, scan);
+			activeScanMap.put(scanId, scan);
 
 			//scanWorking.add(scan);
 			//FIXME: move block engine to EngineManager by posting to a queue
@@ -117,12 +145,16 @@ public class ScanQueueMonitor implements Runnable {
 	private void onCompleted(final long scanId, ScanRequest scan) {
 		log.trace("onCompleted(): {}", scan);
 		
-		if (activeScans.remove(scanId) != null ) {
-			log.debug("scan complete, adding to scanFinished queue; id={}", scanId);
-			workingScans.remove(scanId);
-			scanFinished.add(scan);
-			log.info("Scan finished: {}; queuedCount={}", scan, scanQueued.size());
+		if (activeScanMap.remove(scanId) == null ) {
+			return;
 		}
+		
+		final int count = concurrentScans.decrementAndGet();
+
+		log.debug("Scan complete, adding to scanFinished queue; id={}", scanId);
+		workingScans.remove(scanId);
+		scanFinished.add(scan);
+		log.info("Scan finished: {}; concurrentScans={}", scan, count);
 	}
 
 	private void onOther(ScanRequest scan) {

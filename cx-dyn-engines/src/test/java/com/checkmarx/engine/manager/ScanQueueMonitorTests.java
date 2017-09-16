@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +54,19 @@ public class ScanQueueMonitorTests {
 		log.trace("setup()");
 
 		assertThat(monitor, is(notNullValue()));
+
+		Assume.assumeTrue(runTest);
+
+		cxClient.login();
+		cxClient.blockEngine(1);
+	}
+	
+	@After
+	public void tearDown() {
+		log.trace("tearDown()");
+
+		Assume.assumeTrue(runTest);
+		cxClient.unblockEngine(1);
 	}
 	
 	@Test
@@ -61,9 +75,7 @@ public class ScanQueueMonitorTests {
 		
 		Assume.assumeTrue(runTest);
 
-		cxClient.login();
-		
-		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+		final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 		service.scheduleAtFixedRate(monitor, 0L, 5, TimeUnit.SECONDS);
 		
 		TimeUnit.MINUTES.sleep(10);

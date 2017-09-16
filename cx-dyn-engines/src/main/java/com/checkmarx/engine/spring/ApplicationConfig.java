@@ -17,13 +17,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.annotation.EnableRetry;
 
-import com.checkmarx.engine.Config;
+import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.aws.AwsEngineConfig;
 import com.checkmarx.engine.domain.DefaultEnginePoolBuilder;
 import com.checkmarx.engine.domain.EnginePool;
 import com.checkmarx.engine.domain.ScanQueue;
-import com.checkmarx.engine.domain.EngineSize;
-import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 import com.checkmarx.engine.manager.EngineManager;
 import com.checkmarx.engine.manager.EngineProvisioner;
 import com.checkmarx.engine.manager.ScanQueueMonitor;
@@ -40,17 +38,17 @@ public class ApplicationConfig {
 	}
 	
 	@Bean
-	public ScanQueue scansQueued(Config config) {
+	public ScanQueue scansQueued(CxConfig config) {
 		return new ScanQueue(config.getQueueCapacity());
 	}
 	
 	@Bean
-	public ScanQueue scansFinished(Config config) {
+	public ScanQueue scansFinished(CxConfig config) {
 		return new ScanQueue(config.getQueueCapacity());
 	}
 	
 	@Bean
-	public EnginePool enginePool(Config config, AwsEngineConfig awsConfig) {
+	public EnginePool enginePool(CxConfig config, AwsEngineConfig awsConfig) {
 		final DefaultEnginePoolBuilder builder = new DefaultEnginePoolBuilder(
 				config.getEnginePoolPrefix(), 
 				awsConfig.getEngineExpireIntervalSecs());
@@ -62,7 +60,7 @@ public class ApplicationConfig {
 	
 	@Bean
 	public EngineManager engineMonitor(
-			Config config,
+			CxConfig config,
 			EnginePool enginePool,
 			CxRestClient cxClient,
 			EngineProvisioner engineProvisioner,
@@ -73,9 +71,12 @@ public class ApplicationConfig {
 	}
 	
 	@Bean
-	public ScanQueueMonitor queueMonitor(CxRestClient cxClient,
-			ScanQueue scansQueued, ScanQueue scansFinished) {
-		return new ScanQueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient);
+	public ScanQueueMonitor queueMonitor(
+			CxConfig config,
+			CxRestClient cxClient, 
+			ScanQueue scansQueued, 
+			ScanQueue scansFinished) {
+		return new ScanQueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient, config);
 	}
 	
 }

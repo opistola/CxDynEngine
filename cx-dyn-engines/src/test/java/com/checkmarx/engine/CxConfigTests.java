@@ -31,12 +31,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class ConfigTests {
+public class CxConfigTests {
 	
-	private static final Logger log = LoggerFactory.getLogger(ConfigTests.class);
+	private static final Logger log = LoggerFactory.getLogger(CxConfigTests.class);
 	
 	@Autowired
-	private Config config;
+	private CxConfig config;
 	
 	@Before
 	public void setUp() throws Exception {
