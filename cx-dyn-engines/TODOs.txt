@@ -1,6 +1,3 @@
-Defects
-[ ] ScanRequest dates may fail if they don't contain 3 millisec digits
-
 Features
 [X] Add host IP aws config (usePublicUrlForCxEngine, usePrivateUrlForSpinUp)
 [X] Leave engines running until expiration time
@@ -14,3 +11,6 @@ Features
 [ ] Clean up logging
 [ ] Refactor EngineService/EngineMonitor class structure
 [ ] Add ec2 post launch script 
+
+Fixed
+[X] ScanRequest dates may fail if they don't contain 3 millisec digits
