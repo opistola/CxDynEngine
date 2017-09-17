@@ -75,6 +75,7 @@ public class ScanQueueMonitor implements Runnable {
 		} catch (Throwable t) {
 			log.error("Error occurred while polling scan queue, cause={}; message={}", 
 					t, t.getMessage(), t); 
+			//TODO: determine if unexpected error should terminate monitor; for now swallow
 		}
 		
 	}

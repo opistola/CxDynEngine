@@ -141,8 +141,8 @@ public class EnginePool {
 		return unprovisionedEngines;
 	}
 	
-	public IdleEngineMonitor createIdleEngineMonitor(BlockingQueue<DynamicEngine> expiringEngines) {
-		return new IdleEngineMonitor(expiringEngines);
+	public IdleEngineMonitor createIdleEngineMonitor(BlockingQueue<DynamicEngine> expiringEngines, int expireBufferMins) {
+		return new IdleEngineMonitor(expiringEngines, expireBufferMins);
 	}
 
 	/**
@@ -251,40 +251,51 @@ public class EnginePool {
 		private final Logger log = LoggerFactory.getLogger(EnginePool.IdleEngineMonitor.class);
 		
 		private final BlockingQueue<DynamicEngine> expiredEnginesQueue;
+		private final int expireBufferMins;
 
-		public IdleEngineMonitor(BlockingQueue<DynamicEngine> expiredEnginesQueue) {
+		public IdleEngineMonitor(BlockingQueue<DynamicEngine> expiredEnginesQueue, int expireBufferMins) {
 			this.expiredEnginesQueue = expiredEnginesQueue;
+			this.expireBufferMins = expireBufferMins;
 		}
 
 		@Override
 		public void run() {
 			log.trace("run()");
-			
-			AtomicInteger count = new AtomicInteger(0);
-			
-			// loop thru IDLE engines looking for expiration
-			idleEngines.forEach((size, engines) -> {
-				
-				engines.forEach((engine) -> {
-					try {
-						final DateTime expireTime = engine.getTimeToExpire();
-						log.trace("Checking idle engine: name={}; expireTime={}", 
-								engine.getName(), expireTime);
-	
-						if (expireTime == null) return;
+			try {
 
-						// give us 2 minutes buffer to expire
-						if (expireTime.minusMinutes(2).isBeforeNow()) {
-							count.incrementAndGet();
-							engine.setState(State.EXPIRING);
-							expiredEnginesQueue.put(engine);
-						}
-					} catch (InterruptedException e) {
-						log.info("EngineMonitor interrupted");
-					}
-				}); 
-				log.debug("Expiring engines: size={}; count={}", size, count.get());
-			});
+				final AtomicInteger expiredCount = new AtomicInteger(0);
+				
+				// loop thru IDLE engines looking for expiration
+				idleEngines.forEach((engineSize, engines) -> {
+					
+					engines.forEach((engine) -> checkExpiredEngine(expiredCount, engine));
+					log.debug("Expiring engines: size={}; count={}", engineSize, expiredCount.get());
+				});
+				
+			} catch (Throwable t) {
+				log.warn("Error occurred while checking expired engines; cause={}; message={}", 
+						t, t.getMessage(), t); 
+				// swallow for now to avoid killing background thread
+			}
+			
+		}
+
+		private void checkExpiredEngine(AtomicInteger expiredCount, DynamicEngine engine) {
+			try {
+				final DateTime expireTime = engine.getTimeToExpire();
+				log.trace("Checking idle engine: name={}; expireTime={}", 
+						engine.getName(), expireTime);
+
+				if (expireTime == null) return;
+
+				if (expireTime.minusMinutes(expireBufferMins).isBeforeNow()) {
+					expiredCount.incrementAndGet();
+					engine.setState(State.EXPIRING);
+					expiredEnginesQueue.put(engine);
+				}
+			} catch (InterruptedException e) {
+				log.info("EngineMonitor interrupted");
+			}
 		}
 		
 	}

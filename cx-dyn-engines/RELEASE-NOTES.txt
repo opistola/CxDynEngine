@@ -1,3 +1,8 @@
+v0.5.0
+    - Fixed ScanQueue monitoring issue caused by intermittent ScanRequest datetime unmarshalling error
+    - Added cx.concurrentScanLimit to CxConfig
+    - Added concurrent scan limit check to ScanQueueMonitor, fixing dropped scans
+    
 v0.4.0
     - Added EnginePool configuration to application.properties (AwsEngineConfig)
     

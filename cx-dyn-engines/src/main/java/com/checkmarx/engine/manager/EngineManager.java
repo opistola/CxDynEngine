@@ -107,7 +107,8 @@ public class EngineManager implements Runnable {
 		log.info("run()");
 		
 		try {
-			final IdleEngineMonitor engineMonitor = pool.createIdleEngineMonitor(this.expiredEnginesQueue);
+			final IdleEngineMonitor engineMonitor = 
+					pool.createIdleEngineMonitor(this.expiredEnginesQueue, config.getExpireEngineBufferMins());
 			
 			tasks.add(managerExecutor.submit(new ScanLauncher()));
 			tasks.add(managerExecutor.submit(new ScanFinisher()));
@@ -183,6 +184,9 @@ public class EngineManager implements Runnable {
 				}
 			} catch (InterruptedException e) {
 				log.info("ScanLauncher interrupted");
+			} catch (Throwable t) {
+				log.error("Error occurred in ScanLauncher; cause={}; message={}", 
+						t, t.getMessage(), t); 
 			} finally {
 				log.info("ScanLauncher exiting; scanCount={}", scanCount);
 			}
@@ -324,6 +328,10 @@ public class EngineManager implements Runnable {
 				}
 			} catch (InterruptedException e) {
 				log.info("ScanFinisher interrupted");
+			} catch (Throwable t) {
+				log.error("Error occurred in ScanFinisher; cause={}; message={}", 
+						t, t.getMessage(), t);
+				throw t;
 			} finally {
 				log.info("ScanFinisher exiting; scanCount={}", scanCount);
 			}
@@ -379,11 +387,14 @@ public class EngineManager implements Runnable {
 
 					//blocks until an engine expires
 					final DynamicEngine engine = expiredEnginesQueue.take();
-
 					engineExpiringExecutor.execute(()-> stopEngine(engine));
 				}
 			} catch (InterruptedException e) {
 				log.info("EngineTerminator interrupted");
+			} catch (Throwable t) {
+				log.error("Error occurred in EngineTerminator; cause={}; message={}", 
+						t, t.getMessage(), t);
+				throw t;
 			}
 		}
 		

@@ -29,6 +29,7 @@ public class CxConfig {
 	private int concurrentScanLimit;
 	private String cxEnginePrefix = "**";
 	private String enginePoolPrefix = "cx-engine";
+	private int expireEngineBufferMins = 1;
 	private int idleMonitorSecs = 15;
 	private int queueCapacity = 100;
 	private int queueIntervalSecs = 20;
@@ -71,6 +72,14 @@ public class CxConfig {
 
 	public String getEnginePoolPrefix() {
 		return enginePoolPrefix;
+	}
+
+	public int getExpireEngineBufferMins() {
+		return expireEngineBufferMins;
+	}
+
+	public void setExpireEngineBufferMins(int expireEngineBufferMins) {
+		this.expireEngineBufferMins = expireEngineBufferMins;
 	}
 
 	public void setEnginePoolPrefix(String enginePoolPrefix) {
@@ -145,6 +154,7 @@ public class CxConfig {
 				.add("cxEnginePrefix", cxEnginePrefix)
 				.add("cxEngineUrlPath", cxEngineUrlPath)
 				.add("enginePoolPrefix", enginePoolPrefix)
+				.add("expireEngineBufferMins", expireEngineBufferMins)
 				.add("idleMonitorSecs", idleMonitorSecs)
 				.add("queueCapacity", queueCapacity)
 				.add("queueIntervalSecs", queueIntervalSecs)
