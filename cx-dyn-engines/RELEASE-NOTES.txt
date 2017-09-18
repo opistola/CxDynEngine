@@ -1,7 +1,10 @@
 v0.5.0
     - Fixed ScanQueue monitoring issue caused by intermittent ScanRequest datetime unmarshalling error
+    - Added error handling and retry for Cx RegisterEngine failure
     - Added cx.concurrentScanLimit to CxConfig
     - Added concurrent scan limit check to ScanQueueMonitor, fixing dropped scans
+    - Increased default Cx timeout from 60s to 120s
+    - Decreased default IdleMonitor interval from 60s to 30s
     
 v0.4.0
     - Added EnginePool configuration to application.properties (AwsEngineConfig)

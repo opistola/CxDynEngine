@@ -104,7 +104,7 @@ public class EngineService implements Runnable {
 			final List<EngineServer> engines = cxClient.getEngines();
 			engines.forEach((engine) -> {
 				boolean isDynamic = isDynamicEngine(engine);
-				log.info("CxEngine found; engine={}; isAlive={}; isBlocked=(); isDynamic={}", 
+				log.info("CxEngine found; engine={}; isAlive={}; isBlocked={}; isDynamic={}", 
 						engine.getName(), engine.isAlive(), engine.isBlocked(), isDynamic);
 				if (isDynamic) {
 					//FIXME: once the engine API supports engine state, add active engines to registered engine list

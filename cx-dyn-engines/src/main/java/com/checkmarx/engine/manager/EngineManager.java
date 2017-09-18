@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 
 import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.domain.DynamicEngine;
@@ -210,17 +211,23 @@ public class EngineManager implements Runnable {
 				return;
 			}
 			
-			//TODO: check engine licensing for concurrent scan limit, limit scans launched
+			try {
 			
-			if (allocateIdleEngine(size, scan)) return;
-			
-			if (checkActiveEngines(scan, size)) return;
-			
-			if (allocateNewEngine(size, scan)) return;
-			
-			//TODO: add retry logic for failed launch, try/catch and retry
+				if (allocateIdleEngine(size, scan)) return;
+				
+				if (checkActiveEngines(scan, size)) return;
+				
+				if (allocateNewEngine(size, scan)) return;
+				
+				//TODO: add retry logic for failed launch, try/catch and retry
 
-			log.warn("No engine available for scan: scan={}", scan);
+				log.warn("No engine available for scan: scan={}", scan);
+				
+			} catch (Throwable t) {
+				log.error("Error occurred launching scan; cause={}; message={}", 
+						t, t.getMessage(), t); 
+				//TODO: add retry logic
+			}
 		}
 
 		private EngineSize calcEngineSize(ScanRequest scan) {
@@ -265,6 +272,7 @@ public class EngineManager implements Runnable {
 			log.info("Engine allocated for scan: fromState={}; engine={}; scan={}", fromState, dynEngine, scan);
 		}
 		
+		@Retryable(value = { RestClientException.class }, maxAttempts = 3, backoff = @Backoff(delay = 1000))
 		private EngineServer registerCxEngine(final long scanId, final EngineServer cxServer) {
 			log.trace("registerCxEngine()L scanId={}", scanId);
 			

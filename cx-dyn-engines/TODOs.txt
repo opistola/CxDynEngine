@@ -6,6 +6,7 @@ Features
 [X] Add engine pool config
 [X] Add max concurrent scans
 [ ] Handle no available engines
+[ ] Handle Cx session timeout
 [ ] Add scanid tag to aws engine server
 [ ] Populate active scan map from running engines
 [ ] Clean up logging
