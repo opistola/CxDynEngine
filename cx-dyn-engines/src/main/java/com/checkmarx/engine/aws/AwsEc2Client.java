@@ -206,7 +206,7 @@ public class AwsEc2Client implements AwsComputeClient {
 			final String requestId = result.getSdkResponseMetadata().getRequestId();
 			final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 		
-			log.info("action=terminateInstance; instanceId={}; requestId={}; status={}", 
+			log.debug("action=terminateInstance; instanceId={}; requestId={}; status={}", 
 						instanceId, requestId, statusCode);
 		} catch (AmazonClientException e) {
 			log.warn("Failed to terminate EC2 instance; instanceId={}; cause={}; message={}", 

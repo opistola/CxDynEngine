@@ -90,9 +90,19 @@ public class EngineService implements Runnable {
 		if (!cxClient.login()) {
 			throw new RuntimeException("Unable to login to CxManager");
 		}
-		
+
 		updateHostedEngines();
 		checkCxEngines();
+		registerQueuingEngine();
+	}
+	
+	public void registerQueuingEngine() {
+		log.debug("registerQueueEngine()");
+		
+		final long engineId = config.getQueueingEngineId();
+		final EngineServer engine = cxClient.blockEngine(engineId);
+		
+		log.info("Queueing engine registered: {}", engine);
 	}
 	
 	/**
