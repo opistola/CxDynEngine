@@ -146,6 +146,15 @@ public class CxConfig {
 		return cxEngineUrlPath;
 	}
 
+	public String getVersion() {
+		return getManifestVersion();
+	}
+	
+	private String getManifestVersion() {
+	    final Package objPackage = this.getClass().getPackage();
+	    return objPackage.getImplementationVersion();
+	}
+
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
@@ -162,6 +171,7 @@ public class CxConfig {
 				.add("restUrl", restUrl)
 				.add("timeoutSecs", timeoutSecs)
 				.add("userAgent", userAgent)
+				.add("version", getVersion())
 				.toString();
 	}
 

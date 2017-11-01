@@ -90,7 +90,7 @@ public class CxRestClient {
 		
 		final CloseableHttpClient httpClient = HttpClients.custom()
 	        .setSSLHostnameVerifier(new NoopHostnameVerifier())
-	        .setUserAgent("CxDynamicEngineManager v1.0")
+	        .setUserAgent(config.getUserAgent() + " : v" + config.getVersion())
 	        .disableCookieManagement()
 	        .useSystemProperties()
 	        .build();

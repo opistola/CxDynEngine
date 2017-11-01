@@ -5,7 +5,9 @@ Features
 [X] Block engine after scan is working
 [X] Add engine pool config
 [X] Add max concurrent scans
-[ ] Handle no available engines
+[X] Handle no available engines
+[ ] Add concurrent scans per engine
+[ ] Test NumberOfPromotableScans = 0 (Engine config)
 [ ] Handle Cx session timeout
 [ ] Add scanid tag to aws engine server
 [ ] Populate active scan map from running engines

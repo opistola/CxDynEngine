@@ -38,6 +38,7 @@ dependencies {
         'org.springframework.boot:spring-boot-starter-aop',
         'org.springframework:spring-web',
         'org.springframework.retry:spring-retry',
+        'com.github.ulisesbocchio:jasypt-spring-boot-starter:1.16',
         'com.google.guava:guava',
         'joda-time:joda-time',
         'com.fasterxml.jackson.datatype:jackson-datatype-joda',

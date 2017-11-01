@@ -78,7 +78,7 @@ public class ScanQueueMonitorTests {
 		final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 		service.scheduleAtFixedRate(monitor, 0L, 5, TimeUnit.SECONDS);
 		
-		TimeUnit.MINUTES.sleep(10);
+		TimeUnit.MINUTES.sleep(1);
 		
 		service.shutdownNow();
 	}

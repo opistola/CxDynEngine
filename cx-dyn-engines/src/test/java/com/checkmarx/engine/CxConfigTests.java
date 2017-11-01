@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 
+import org.jasypt.util.text.BasicTextEncryptor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +35,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class CxConfigTests {
 	
 	private static final Logger log = LoggerFactory.getLogger(CxConfigTests.class);
+	
+	private static final String USERNAME = "admin@cx";
 	
 	@Autowired
 	private CxConfig config;
@@ -56,6 +59,29 @@ public class CxConfigTests {
 		assertThat(config.getRestUrl(), is(not(isEmptyOrNullString())));
 		assertThat(config.getUserName(), is(not(isEmptyOrNullString())));
 		assertThat(config.getTimeoutSecs(), is(greaterThan(0)));
+		
+		//test encrypted property
+		//  requires jasypt.encryptor.password=CxR0cks!! env var or system property
+		//  requires cx.username in application.properties is USERNAME (const defined above)
+		assertThat(config.getUserName(), is(USERNAME));
+	}
+	
+	@Test
+	public void testJasypt() {
+		final String ENCRYPTION_KEY = "CxR0cks!!";
+		
+		BasicTextEncryptor encryptor = new BasicTextEncryptor();
+		encryptor.setPassword(ENCRYPTION_KEY);
+		
+		final String encryptedUsername = encryptor.encrypt(USERNAME);
+		log.debug("Encrypted user: {}", encryptedUsername);
+		final String encryptedPass = encryptor.encrypt("Im@hom3y!!");
+		log.debug("Encrypted pass: {}", encryptedPass);
+		
+		final String decryptedUsername = encryptor.decrypt(encryptedUsername);
+		log.debug("Decrypted: {}", decryptedUsername);
+		
+		assertThat(decryptedUsername, is(USERNAME));
 	}
 	
 }
