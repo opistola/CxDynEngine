@@ -69,6 +69,10 @@ public class AwsEngineConfigTests {
 		assertThat(pool, notNullValue());
 		assertThat(pool.isEmpty(), is(false));
 		
+		final Map<String, String> tagMap = config.getTagMap();
+		assertThat(tagMap, notNullValue());
+		assertThat(tagMap.values(), hasSize(greaterThan(0)));
+		
 	}
 
 }

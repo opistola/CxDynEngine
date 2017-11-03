@@ -89,6 +89,10 @@ public class AwsEngines implements EngineProvisioner {
 		log.trace("createEngineTags(): size={}", size);
 		final Map<String, String> tags = createCxTags(CxServerRole.ENGINE, config.getCxVersion());
 		tags.put(CX_SIZE_TAG, size);
+		// add custom tags from configuration
+		config.getTagMap().forEach( (tag,value) -> {
+			tags.put(tag, value);
+		});
 		return tags;
 	}
 

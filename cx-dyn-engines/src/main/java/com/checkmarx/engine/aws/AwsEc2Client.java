@@ -96,7 +96,6 @@ public class AwsEc2Client implements AwsComputeClient {
 			// wait until instance is running to populate IP addresses
 			instance = waitForPendingState(instanceId, null);
 			
-			//final int statusCode = result.getSdkHttpMetadata().getHttpStatusCode();
 			success = true;
 			return instance;
 			

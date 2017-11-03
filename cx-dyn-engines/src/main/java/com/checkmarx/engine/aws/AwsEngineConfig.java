@@ -53,6 +53,11 @@ public class AwsEngineConfig {
 	private final Map<String, String> engineSizeMap = Maps.newHashMap();
 	
 	private final List<EnginePoolEntry> pool = Lists.newArrayList();
+	
+	/**
+	 * Maps custom EC2 tags to values
+	 */
+	private final Map<String,String> engineTagMap = Maps.newHashMap();
 
 	public boolean isAssignPublicIP() {
 		return assignPublicIP;
@@ -189,6 +194,15 @@ public class AwsEngineConfig {
 		return pool;
 	}
 
+	/**
+	 * Map of custom EC2 tags
+	 *  	key=tag name
+	 *  	value=tag value 
+	 */
+	public Map<String, String> getTagMap() {
+		return engineTagMap;
+	}
+
 	public String printEngineSizeMap() {
 		final StringBuilder sb = new StringBuilder();
 		engineSizeMap.forEach((size,instanceType) ->
@@ -201,6 +215,13 @@ public class AwsEngineConfig {
 		pool.forEach((entry) -> {
 			sb.append(String.format("%s:%d, ", entry.getScanSize().getName(), entry.getCount()));
 		});
+		return sb.toString().replaceAll(", $", ""); 
+	}
+
+	private String printEngineTagMap() {
+		final StringBuilder sb = new StringBuilder();
+		engineTagMap.forEach((name,value) ->
+			sb.append(String.format("%s->%s, ", name,value)) );
 		return sb.toString().replaceAll(", $", ""); 
 	}
 
@@ -222,6 +243,7 @@ public class AwsEngineConfig {
 				.add("usePublicUrlForMonitor", usePublicUrlForMonitor)
 				.add("enginePool", "[" + printEnginePool() + "]")
 				.add("engineSizeMap", "[" + printEngineSizeMap() +"]")
+				.add("engineTagMap", "[" + printEngineTagMap() +"]")
 				.toString();
 	}
 

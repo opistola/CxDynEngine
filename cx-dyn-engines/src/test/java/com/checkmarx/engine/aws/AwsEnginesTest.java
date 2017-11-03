@@ -44,8 +44,8 @@ public class AwsEnginesTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEnginesTest.class);
 
-	private final boolean runTest = false;  //uncomment next line to run this test
-	//private final boolean runTest = true;
+	//private final boolean runTest = false;  //uncomment next line to run this test
+	private final boolean runTest = true;
 	
 	@Autowired
 	private AwsEngines awsEngines;
