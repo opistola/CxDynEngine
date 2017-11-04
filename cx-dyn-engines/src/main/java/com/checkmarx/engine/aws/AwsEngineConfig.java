@@ -45,6 +45,9 @@ public class AwsEngineConfig {
 	private boolean usePublicUrlForCx = false;
 	private boolean usePublicUrlForMonitor = false;
 	
+	private String scriptOnLaunch;
+	private String scriptOnTerminate;
+
 	/**
 	 * Maps EngineSize to EC2 instanceType; 
 	 * 	key=size (name), 
@@ -181,6 +184,28 @@ public class AwsEngineConfig {
 	}
 
 	/**
+	 * @return script file to execute on engine launch
+	 */
+	public String getScriptOnLaunch() {
+		return scriptOnLaunch;
+	}
+
+	public void setScriptOnLaunch(String scriptOnLaunch) {
+		this.scriptOnLaunch = scriptOnLaunch;
+	}
+
+	/**
+	 * @return script file to execute on engine termination
+	 */
+	public String getScriptOnTerminate() {
+		return scriptOnTerminate;
+	}
+
+	public void setScriptOnTerminate(String scriptOnTerminate) {
+		this.scriptOnTerminate = scriptOnTerminate;
+	}
+
+	/**
 	 * Map of EngineSize to EC2 instanceType; 
 	 * key=size (name), 
 	 * value=ec2 instance type (e.g. m4.large)
@@ -237,7 +262,8 @@ public class AwsEngineConfig {
 				.add("monitorPollingIntervalSecs", monitorPollingIntervalSecs)
 				.add("securityGroup", securityGroup)
 				.add("launchTimeoutSec", launchTimeoutSec)
-				.add("subnetId", subnetId)
+				.add("scriptOnLaunch", scriptOnLaunch)
+				.add("scriptOnTerminate", scriptOnTerminate)
 				.add("terminateOnStop", terminateOnStop)
 				.add("usePublicUrlForCx", usePublicUrlForCx)
 				.add("usePublicUrlForMonitor", usePublicUrlForMonitor)

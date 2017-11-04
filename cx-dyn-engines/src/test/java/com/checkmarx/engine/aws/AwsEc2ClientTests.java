@@ -32,6 +32,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.amazonaws.services.ec2.model.Instance;
+import com.checkmarx.engine.aws.AwsComputeClient;
+import com.checkmarx.engine.aws.AwsEngineConfig;
+import com.checkmarx.engine.aws.AwsEngines;
+import com.checkmarx.engine.aws.Ec2;
 import com.checkmarx.engine.manager.EngineProvisioner;
 import com.checkmarx.engine.manager.EngineProvisioner.CxServerRole;
 import com.google.common.collect.Lists;

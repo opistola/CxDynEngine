@@ -23,7 +23,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.python.google.common.collect.Queues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Retryable;
@@ -43,6 +42,7 @@ import com.checkmarx.engine.rest.model.ScanRequest;
 import com.checkmarx.engine.utils.ExecutorServiceUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 
 public class EngineManager implements Runnable {
 	

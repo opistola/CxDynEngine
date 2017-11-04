@@ -13,13 +13,31 @@
  ******************************************************************************/
 package com.checkmarx.engine;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
 @SpringBootApplication
 public class CxDynEnginesApplication {
+	
+	private static final Logger log = LoggerFactory.getLogger(CxDynEnginesApplication.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(CxDynEnginesApplication.class, args);
 	}
+	
+	@Bean
+	@Profile("!test")
+	CommandLineRunner lookup() {
+		return args -> {
+			
+			
+			
+		};
+	}
+	
 }

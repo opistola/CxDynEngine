@@ -41,11 +41,12 @@ dependencies {
         'com.github.ulisesbocchio:jasypt-spring-boot-starter:1.16',
         'com.google.guava:guava',
         'joda-time:joda-time',
+        'commons-io:commons-io',
         'com.fasterxml.jackson.datatype:jackson-datatype-joda',
         'com.amazonaws:aws-java-sdk-ec2',
         'org.apache.commons:commons-lang3:3.6',
-        'org.codehaus.groovy:groovy-all',
-        'org.python:jython-standalone:2.7.1'
+        //'org.python:jython-standalone:2.7.1',
+        'org.codehaus.groovy:groovy-all'
     )
     testCompile('org.springframework.boot:spring-boot-starter-test')
 }

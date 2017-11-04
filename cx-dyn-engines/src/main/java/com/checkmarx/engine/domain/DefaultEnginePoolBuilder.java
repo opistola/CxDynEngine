@@ -45,12 +45,6 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 	}
 	
 	@Override
-	public EnginePoolBuilder addEntry(EngineSize size, int count) {
-		entries.add(new EnginePoolEntry(size, count));
-		return this;
-	}
-
-	@Override
 	public EnginePool build() {
 		log.trace("build()");
 		engines.clear();

@@ -16,6 +16,7 @@ package com.checkmarx.engine.aws;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
@@ -24,15 +25,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.util.StringUtils;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
 import com.checkmarx.engine.manager.EngineProvisioner;
 import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.utils.ExecutorServiceUtils;
+import com.checkmarx.engine.utils.ScriptRunner;
 import com.checkmarx.engine.utils.TimeoutTask;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -46,6 +49,9 @@ public class AwsEngines implements EngineProvisioner {
 
 	private static final Logger log = LoggerFactory.getLogger(AwsEngines.class);
 	
+	//TODO: inject scripting ExecutorService via constructor
+	private final ExecutorService executor = ExecutorServiceUtils.buildPooledExecutorService(20, "eng-scripts-%d", false);
+
 	private final AwsEngineConfig config;
 	private final AwsComputeClient ec2Client;
 	private final CxRestClient cxClient;
@@ -148,7 +154,7 @@ public class AwsEngines implements EngineProvisioner {
 
 	private String lookupEngineSize(Instance instance) {
 		String sizeTag = Ec2.getTag(instance, CX_SIZE_TAG);
-		if (!StringUtils.isNullOrEmpty(sizeTag)) return sizeTag;
+		if (!Strings.isNullOrEmpty(sizeTag)) return sizeTag;
 		
 		final Map<String, String> sizeMap = config.getEngineSizeMap();
 		
@@ -200,11 +206,13 @@ public class AwsEngines implements EngineProvisioner {
 			if (waitForSpinup) {
 				pingEngine(host);
 			}
+			runScript(config.getScriptOnLaunch(), engine);
+			
 			//engine.setState(State.IDLE);
 			success = true;
 		} catch (Throwable e) {
 			log.error("Error occurred while launching AWS EC2 instance; name={}; {}", name, engine, e);
-			if (!StringUtils.isNullOrEmpty(instanceId)) {
+			if (!Strings.isNullOrEmpty(instanceId)) {
 				log.warn("Terminating instance due to error; instanceId={}", instanceId);
 				ec2Client.terminate(instanceId);
 				instance = null;
@@ -215,7 +223,7 @@ public class AwsEngines implements EngineProvisioner {
 					success, name, instanceId, timer.elapsed(TimeUnit.SECONDS), Ec2.print(instance)); 
 		}
 	}
-
+	
 	@Override
 	public void stop(DynamicEngine engine) {
 		stop(engine, false);
@@ -242,6 +250,7 @@ public class AwsEngines implements EngineProvisioner {
 				ec2Client.terminate(instanceId);
 				provisionedEngines.remove(name);
 				//engine.setState(State.UNPROVISIONED);
+				runScript(config.getScriptOnTerminate(), engine);
 			} else {
 				ec2Client.stop(instanceId);
 				instance = ec2Client.describe(instanceId);
@@ -271,7 +280,7 @@ public class AwsEngines implements EngineProvisioner {
 		final String cxIp = config.isUsePublicUrlForCx() ? publicIp : ip;
 		final String monitorIp = config.isUsePublicUrlForMonitor() ? publicIp : ip;
 		final DateTime launchTime = new DateTime(instance.getLaunchTime());
-		return new Host(name, ip, publicIp, buildCxUrl(cxIp), buildMonitorUrl(monitorIp), launchTime);
+		return new Host(name, ip, publicIp, buildCxEngineUrl(cxIp), buildMonitorUrl(monitorIp), launchTime);
 	}
 
 	private void pingEngine(Host host) throws Exception {
@@ -294,8 +303,23 @@ public class AwsEngines implements EngineProvisioner {
 		}
 	}
 	
-	private String buildCxUrl(String ip) {
-		if (StringUtils.isNullOrEmpty(ip)) return null;
+	void runScript(String scriptFile, DynamicEngine engine) {
+		log.trace("runScript() : script={}", scriptFile);
+		
+		if (Strings.isNullOrEmpty(scriptFile)) return;
+		
+		//TODO: pass a readonly copy of DynamicEngine 
+		final ScriptRunner<DynamicEngine> runner = new ScriptRunner<DynamicEngine>();
+		if (runner.loadScript(scriptFile)) {
+			runner.bindData("engine", engine);
+			executor.submit(runner);
+		} else {
+			log.debug("Script file not found: {}", scriptFile);
+		}
+	}
+
+	private String buildCxEngineUrl(String ip) {
+		if (Strings.isNullOrEmpty(ip)) return null;
 		final String host = "http://" + ip;
 		return cxClient.buildEngineServerUrl(host);
 	}

@@ -35,6 +35,8 @@ public class TimeoutTask<T> {
 	
 	private static final Logger log = LoggerFactory.getLogger(TimeoutTask.class);
 
+	private final static ExecutorService executor = ExecutorServiceUtils.buildPooledExecutorService(20, "eng-timer-%d", false);
+
 	private final String taskName;
 	private final int timeout;
 	private final TimeUnit timeUnit;
@@ -47,7 +49,6 @@ public class TimeoutTask<T> {
 	
 	public T execute(Callable<T> task) throws InterruptedException, ExecutionException, TimeoutException {
 		log.trace("execute(): task={}; timeout={}; timeUnit={}", taskName, timeout, timeUnit);
-		final ExecutorService executor = ExecutorServiceUtils.buildSingleThreadExecutorService("eng-timer-%d", false);
 		final Future<T> future = executor.submit(task);
 		try {
 			return future.get(timeout, timeUnit);
@@ -61,7 +62,7 @@ public class TimeoutTask<T> {
 					taskName, t, t.getMessage());
 			throw e;
 		} finally {
-			executor.shutdownNow();
+			//executor.shutdownNow();
 		}
 	}
 	

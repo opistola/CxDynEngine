@@ -20,6 +20,7 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -33,9 +34,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.checkmarx.engine.aws.AwsEngines;
+import com.checkmarx.engine.aws.Ec2;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EngineSize;
+import com.checkmarx.engine.domain.Host;
 import com.google.common.collect.Lists;
 
 @RunWith(SpringRunner.class)
@@ -46,6 +49,8 @@ public class AwsEnginesTest {
 
 	//private final boolean runTest = false;  //uncomment next line to run this test
 	private final boolean runTest = true;
+	
+	private final String NAME = "cx-engine-test-01";
 	
 	@Autowired
 	private AwsEngines awsEngines;
@@ -64,10 +69,23 @@ public class AwsEnginesTest {
 		runningEngines.forEach((engine) -> {
 			awsEngines.stop(engine, true);
 			log.debug("Stopped: {}", engine);
-			//assertThat(engine.getState(), is(State.UNPROVISIONED));
 		});
+		Thread.sleep(2000);
 	}
 	
+	@Test
+	public void testScript() {
+		log.trace("testScript()");
+		
+		final EngineSize size = new EngineSize("S", 1, 50000);
+		final Host host = new Host(NAME, "1.2.3.4", "http://1.2.3.4", DateTime.now());
+		final DynamicEngine engine = new DynamicEngine(NAME, size.getName(), 300);
+		engine.setHost(host);
+
+		awsEngines.runScript("scripts/launch.groovy", engine);
+		awsEngines.runScript("scripts/terminate.js", engine);
+	}
+
 	@Test
 	public void testFindEngines() {
 		log.trace("testFindEngines()");
@@ -94,8 +112,6 @@ public class AwsEnginesTest {
 		
 		Assume.assumeTrue(runTest);
 
-		final String NAME = "cx-engine-test-01";
-		
 		final EngineSize size = new EngineSize("S", 1, 50000);
 		final DynamicEngine engine = new DynamicEngine(NAME, size.getName(), 300);
 		log.debug("Pre-launch: {}", engine);
@@ -105,7 +121,6 @@ public class AwsEnginesTest {
 		runningEngines.add(engine);
 		
 		log.debug("Launched: {}", engine);
-		//assertThat(engine.getState(), is(State.IDLE));
 		assertThat(engine.getName(), is(NAME));
 		assertThat(engine.getHost(), is(notNullValue()));
 		assertThat(engine.getHost().getName(), is(NAME));
