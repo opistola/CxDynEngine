@@ -19,20 +19,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
+import com.checkmarx.engine.SpringUnitTest;
 import com.checkmarx.engine.rest.CxRestClient;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class EngineManagerTests {
+public class EngineManagerTests extends SpringUnitTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(EngineManagerTests.class);
 	
@@ -44,6 +41,7 @@ public class EngineManagerTests {
 	
 	@Before
 	public void setUp() throws Exception {
+		
 		assertThat(engineManager, notNullValue());
 		assertThat(cxClient, notNullValue());
 		assertThat(cxClient.login(), is(true));
@@ -53,6 +51,7 @@ public class EngineManagerTests {
 	public void testShutdown() throws InterruptedException {
 		log.trace("testShutdown()");
 		
+		Assume.assumeTrue(super.runIntegrationTests());
 		
 		engineManager.run();
 		TimeUnit.SECONDS.sleep(10);

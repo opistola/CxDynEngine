@@ -13,7 +13,6 @@
  ******************************************************************************/
 package com.checkmarx.engine.domain;
 
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -30,7 +29,6 @@ import com.checkmarx.engine.domain.DynamicEngine.State;
 public class DynamicEngineTests {
 	
 	private static final Logger log = LoggerFactory.getLogger(DynamicEngineTests.class);
-
 	
 	@Test
 	public void testTimeToExpire() throws Exception {

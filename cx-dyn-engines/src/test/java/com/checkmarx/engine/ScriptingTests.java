@@ -16,10 +16,7 @@ package com.checkmarx.engine;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.util.List;
-
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
@@ -32,15 +29,12 @@ import com.checkmarx.engine.rest.model.ProgramLanguage;
 import com.checkmarx.engine.rest.model.Project;
 import com.checkmarx.engine.rest.model.ScanRequest;
 import com.checkmarx.engine.rest.model.ScanRequest.ScanStatus;
+import com.checkmarx.engine.utils.ScriptingUtils;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
-/**
- * @author rjgey
- *
- */
 public class ScriptingTests {
 	
 	private static final Logger log = LoggerFactory.getLogger(ScriptingTests.class);
@@ -52,25 +46,8 @@ public class ScriptingTests {
 	@Test
 	public void testScriptingEngine() {
 		log.trace("testScriptingEngine()");
-
-		final ScriptEngineManager manager = new ScriptEngineManager();
-        final List<ScriptEngineFactory> engines = manager.getEngineFactories();
-        if (engines.isEmpty()) {
-            log.debug("No scripting engines were found");
-            return;
-        }
-        
-        log.debug("The following {} scripting engines were found: ", engines.size());
-        engines.forEach((engine) -> {
-        	final StringBuilder names = new StringBuilder();
-        	engine.getNames().forEach((name) -> names.append(name + ","));
-        	log.debug("engineName='{}', version={}, language={}, languageVersion='{}', names=[{}]", 
-        			engine.getEngineName(),
-        			engine.getEngineVersion(),
-        			engine.getLanguageName(),
-        			engine.getLanguageVersion(),
-        			names.toString().replaceAll(",$", ""));
-        });
+		
+		ScriptingUtils.logScriptingEngines();
 	}
 	
 	@Test
@@ -90,7 +67,8 @@ public class ScriptingTests {
 		assertThat(isMatch, is(true));
 	}
 	
-	@Test
+	//@Test
+	// Removed Jython library due to size (40MBs)
 	public void testPythonScript() throws ScriptException {
 		log.trace("testPythonScript()");
 		

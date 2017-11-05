@@ -29,24 +29,20 @@ import org.assertj.core.util.Lists;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.HttpClientErrorException;
 
+import com.checkmarx.engine.SpringUnitTest;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
 @TestPropertySource("/application-test.properties")
-public class CxRestClientTests {
+public class CxRestClientTests extends SpringUnitTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(CxRestClientTests.class);
 

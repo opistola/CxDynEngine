@@ -25,23 +25,16 @@ import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
+import com.checkmarx.engine.SpringUnitTest;
 import com.checkmarx.engine.rest.CxRestClient;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class ScanQueueMonitorTests {
+public class ScanQueueMonitorTests extends SpringUnitTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(ScanQueueMonitorTests.class);
-
-	//private final boolean runTest = false;  //uncomment next line to run this test
-	private final boolean runTest = true;
 
 	@Autowired
 	private ScanQueueMonitor monitor;
@@ -55,7 +48,7 @@ public class ScanQueueMonitorTests {
 
 		assertThat(monitor, is(notNullValue()));
 
-		Assume.assumeTrue(runTest);
+		Assume.assumeTrue(super.runIntegrationTests());
 
 		cxClient.login();
 		cxClient.blockEngine(1);
@@ -65,7 +58,7 @@ public class ScanQueueMonitorTests {
 	public void tearDown() {
 		log.trace("tearDown()");
 
-		Assume.assumeTrue(runTest);
+		Assume.assumeTrue(super.runIntegrationTests());
 		cxClient.unblockEngine(1);
 	}
 	
@@ -73,7 +66,7 @@ public class ScanQueueMonitorTests {
 	public void test() throws Exception {
 		log.trace("test()");
 		
-		Assume.assumeTrue(runTest);
+		Assume.assumeTrue(super.runIntegrationTests());
 
 		final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 		service.scheduleAtFixedRate(monitor, 0L, 5, TimeUnit.SECONDS);
