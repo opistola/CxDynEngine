@@ -2,8 +2,11 @@ USAGE:
     java -Djasypt.encryptor.password=<key> -jar cx-dyn-engines-0.5.0-SNAPSHOT.jar
     
 
-
 v0.6.0
+    - Implemented console app
+    - Build produces deployable zip file, use:
+      ./gradlew zip
+    - Add external config file (application.properties)
     - Add correct handling for queued scans when no engines are available
     - Add property/config encryption using Jasypt
       - encryption key can be passed via Java system property -Djasypt.encryptor.password=<key>
@@ -15,6 +18,7 @@ v0.6.0
       - Default scripting engines include: JS, Groovy 
       - See https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/prog_guide/api.html
       - See sample scripts in src/main/resources/scripts
+      - Scripts can be added external to application, use application.properties to specify paths
       
 v0.5.0
     - Fix ScanQueue monitoring issue caused by intermittent ScanRequest datetime unmarshalling error
