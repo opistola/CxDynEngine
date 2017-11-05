@@ -21,6 +21,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 
+import com.checkmarx.engine.manager.EngineService;
+import com.checkmarx.engine.utils.ScriptingUtils;
+
 @SpringBootApplication
 public class CxDynEnginesApplication {
 	
@@ -32,11 +35,14 @@ public class CxDynEnginesApplication {
 	
 	@Bean
 	@Profile("!test")
-	CommandLineRunner lookup() {
+	CommandLineRunner run(EngineService service) {
 		return args -> {
 			
+			log.info("CxDynEnginesApplication.run()");
 			
+			ScriptingUtils.logScriptingEngines();
 			
+			service.run();
 		};
 	}
 	
