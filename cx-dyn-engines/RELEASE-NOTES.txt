@@ -3,7 +3,9 @@ USAGE:
     
 
 v0.6.0
-    - Implemented console app
+    - Implemented console app which can be run as a background service
+      - NOTE: Spring Boot starts an embedded Tomcat instance, by default on port 8080, for JMX.
+      - DynEngines currently doesn't expose any JMX functionality, but will in the future.
     - Build produces deployable zip file, use:
       ./gradlew zip
     - Add external config file (application.properties)

@@ -65,15 +65,33 @@ jar {
     }
 }
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
 task zip(type: Zip) {
     dependsOn bootRepackage
-    from 'dist'
+    from 'src/main/resources/dist'
     from jar
     into 'cx-dyn-engines'
 }
 
-task archive(type: Copy) {
+task dist(type: Copy) {
     dependsOn zip
     from 'build/distributions'
+    from 'build/libs'
     into '../archive/'
+    include '*-sources.jar'
+    include '*.zip'
+    rename { String fileName ->
+        fileName.replace('.jar', '.zip')
+    }
+    rename { String fileName ->
+        fileName.replace('-SNAPSHOT', '')
+    }
 }
