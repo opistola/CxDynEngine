@@ -64,3 +64,10 @@ jar {
                    "Implementation-Version": version)
     }
 }
+
+task zip(type: Zip) {
+    dependsOn bootRepackage
+    from 'dist'
+    from jar
+    into 'cx-dyn-engines'
+}
