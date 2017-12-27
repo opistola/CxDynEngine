@@ -8,6 +8,7 @@ Features
 [X] Handle no available engines
 [X] Add property (password) encryption
 [X] Add engine launch/terminate scripting hooks (JSR-223)
+[ ] Add command for creating encrypted values
 [ ] Add concurrent scans per engine
 [ ] Test NumberOfPromotableScans = 0 (Engine config)
 [ ] Handle Cx session timeout
