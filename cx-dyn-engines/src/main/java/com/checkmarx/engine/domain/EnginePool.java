@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -300,10 +301,11 @@ public class EnginePool {
 		
 	}
 	
-	public static class EnginePoolEntry {
+	public static class EnginePoolEntry implements Comparable<EnginePoolEntry> {
 		
 		private EngineSize scanSize;
 		private int count;
+		private int minimum;
 		
 		public EnginePoolEntry() {
 			// for Spring
@@ -322,6 +324,17 @@ public class EnginePool {
 			return count;
 		}
 		
+		/**
+		 * @return minimum # of running/provisioned engines for this pool
+		 */
+		public int getMinimum() {
+			return minimum;
+		}
+
+		public void setMinimum(int minimum) {
+			this.minimum = minimum;
+		}
+
 		public void setScanSize(EngineSize scanSize) {
 			this.scanSize = scanSize;
 		}
@@ -331,12 +344,35 @@ public class EnginePool {
 		}
 
 		@Override
+		public int hashCode() {
+			return Objects.hashCode(minimum, count, scanSize);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			final EnginePoolEntry other = (EnginePoolEntry) obj;
+			return Objects.equal(count, other.count)
+				&& Objects.equal(minimum, other.minimum)
+				&& Objects.equal(scanSize, other.scanSize);
+		}
+
+		@Override
+		public int compareTo(EnginePoolEntry other) {
+			return scanSize.compareTo(other.scanSize);
+		}
+
+		@Override
 		public String toString() {
 			return MoreObjects.toStringHelper(this)
 					.add("scanSize", scanSize)
 					.add("count", count)
+					.add("minimum", minimum)
 					.toString();
 		}
+
 	}
 
 }

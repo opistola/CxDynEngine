@@ -31,7 +31,7 @@ import com.google.common.collect.Maps;
  * @author rjgeyer
  *
  */
-public class DynamicEngine {
+public class DynamicEngine implements Comparable<DynamicEngine> {
 	
 	private static final Logger log = LoggerFactory.getLogger(DynamicEngine.class);
 
@@ -232,6 +232,11 @@ public class DynamicEngine {
 	}
 
 	@Override
+	public int compareTo(DynamicEngine o) {
+		return name.compareTo(o.name);
+	}
+	
+	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("name", name)
@@ -249,5 +254,5 @@ public class DynamicEngine {
 				//.omitNullValues()
 				.toString();
 	}
-	
+
 }

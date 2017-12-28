@@ -26,8 +26,8 @@ public class DefaultEnginePoolBuilder implements EnginePoolBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultEnginePoolBuilder.class);
 
-	private final Set<EnginePoolEntry> entries = Sets.newHashSet();
-	private final Set<DynamicEngine> engines = Sets.newHashSet();
+	private final Set<EnginePoolEntry> entries = Sets.newTreeSet();
+	private final Set<DynamicEngine> engines = Sets.newTreeSet();
 	
 	private final String engineNamePrefix;
 	private final long expirationIntervalSecs;

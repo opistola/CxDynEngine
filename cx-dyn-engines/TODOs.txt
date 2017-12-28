@@ -8,7 +8,11 @@ Features
 [X] Handle no available engines
 [X] Add property (password) encryption
 [X] Add engine launch/terminate scripting hooks (JSR-223)
+[ ] Factor EnginePool out of AwsEngineConfig
 [ ] Add command for creating encrypted values
+[ ] Add AWS credentials
+[ ] Add minimum provisioned engines
+[ ] Clean up unit tests (remove environment dependencies)
 [ ] Add concurrent scans per engine
 [ ] Test NumberOfPromotableScans = 0 (Engine config)
 [ ] Handle Cx session timeout
@@ -16,9 +20,21 @@ Features
 [ ] Populate active scan map from running engines
 [ ] Clean up logging
 [ ] Refactor EngineService/EngineMonitor class structure
+[ ] Refactor EnginePool/DynamicEngine state machine
 [ ] Add ec2 post launch script
 [ ] **Refactor EnginePool to include pool queue
 [ ] **Add scriptable EnginePool match criteria
 
 Fixed
 [X] ScanRequest dates may fail unmarshalling if they don't contain 3 millisec digits
+
+
+RANDY
+[ ] Pull out EnginePool config
+[ ] Add external spring config for multiple EngineProvisioners
+[ ] Modularlize EngineProvisioners
+[ ] Scaffold VmwareProvisioner (separate module)
+
+SERGIO
+[ ] Define and implement VmwareConfig
+[ ] Implement VmwareProvisioner

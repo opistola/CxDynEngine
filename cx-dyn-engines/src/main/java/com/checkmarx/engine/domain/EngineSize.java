@@ -16,7 +16,7 @@ package com.checkmarx.engine.domain;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
-public class EngineSize {
+public class EngineSize implements Comparable<EngineSize> {
 	
 	private String name;
 	private long minLOC;
@@ -67,23 +67,18 @@ public class EngineSize {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		EngineSize other = (EngineSize) obj;
-		if (maxLOC != other.maxLOC)
-			return false;
-		if (minLOC != other.minLOC)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		final EngineSize other = (EngineSize) obj;
+		return Objects.equal(maxLOC, other.maxLOC)
+			&& Objects.equal(minLOC, other.minLOC)
+			&& Objects.equal(name, other.name);
+	}
+
+	@Override
+	public int compareTo(EngineSize other) {
+		return Long.compare(maxLOC, other.maxLOC);
 	}
 
 	@Override

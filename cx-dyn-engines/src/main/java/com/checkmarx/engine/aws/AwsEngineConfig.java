@@ -13,17 +13,14 @@
  ******************************************************************************/
 package com.checkmarx.engine.aws;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 import com.checkmarx.engine.domain.EngineSize;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 @Configuration
@@ -50,12 +47,10 @@ public class AwsEngineConfig {
 
 	/**
 	 * Maps EngineSize to EC2 instanceType; 
-	 * 	key=size (name), 
-	 * 	value=ec2 instance type (e.g. m4.large)
+	 * 	key=size (M), 
+	 * 	value=ec2 instance type (m4.large)
 	 */
 	private final Map<String, String> engineSizeMap = Maps.newHashMap();
-	
-	private final List<EnginePoolEntry> pool = Lists.newArrayList();
 	
 	/**
 	 * Maps custom EC2 tags to values
@@ -215,10 +210,6 @@ public class AwsEngineConfig {
 		return engineSizeMap;
 	}
 
-	public List<EnginePoolEntry> getPool() {
-		return pool;
-	}
-
 	/**
 	 * Map of custom EC2 tags
 	 *  	key=tag name
@@ -232,14 +223,6 @@ public class AwsEngineConfig {
 		final StringBuilder sb = new StringBuilder();
 		engineSizeMap.forEach((size,instanceType) ->
 			sb.append(String.format("%s->%s, ", size,instanceType)) );
-		return sb.toString().replaceAll(", $", ""); 
-	}
-
-	private String printEnginePool() {
-		final StringBuilder sb = new StringBuilder();
-		pool.forEach((entry) -> {
-			sb.append(String.format("%s:%d, ", entry.getScanSize().getName(), entry.getCount()));
-		});
 		return sb.toString().replaceAll(", $", ""); 
 	}
 
@@ -267,7 +250,6 @@ public class AwsEngineConfig {
 				.add("terminateOnStop", terminateOnStop)
 				.add("usePublicUrlForCx", usePublicUrlForCx)
 				.add("usePublicUrlForMonitor", usePublicUrlForMonitor)
-				.add("enginePool", "[" + printEnginePool() + "]")
 				.add("engineSizeMap", "[" + printEngineSizeMap() +"]")
 				.add("engineTagMap", "[" + printEngineTagMap() +"]")
 				.toString();

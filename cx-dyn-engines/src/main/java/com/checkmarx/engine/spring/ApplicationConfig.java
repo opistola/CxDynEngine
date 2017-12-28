@@ -13,6 +13,8 @@
  ******************************************************************************/
 package com.checkmarx.engine.spring;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.annotation.EnableRetry;
@@ -21,6 +23,8 @@ import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.aws.AwsEngineConfig;
 import com.checkmarx.engine.domain.DefaultEnginePoolBuilder;
 import com.checkmarx.engine.domain.EnginePool;
+import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
+import com.checkmarx.engine.domain.EnginePoolConfig;
 import com.checkmarx.engine.domain.ScanQueue;
 import com.checkmarx.engine.manager.EngineManager;
 import com.checkmarx.engine.manager.EngineProvisioner;
@@ -48,11 +52,12 @@ public class ApplicationConfig {
 	}
 	
 	@Bean
-	public EnginePool enginePool(CxConfig config, AwsEngineConfig awsConfig) {
+	public EnginePool enginePool(CxConfig config, EnginePoolConfig poolConfig, AwsEngineConfig awsConfig) {
 		final DefaultEnginePoolBuilder builder = new DefaultEnginePoolBuilder(
 				config.getEnginePoolPrefix(), 
 				awsConfig.getEngineExpireIntervalSecs());
-		awsConfig.getPool().forEach((entry) -> {
+		final List<EnginePoolEntry> pool = poolConfig.getPool();
+		pool.forEach((entry) -> {
 			builder.addEntry(entry);
 		});
 		return builder.build();

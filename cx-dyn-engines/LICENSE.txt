@@ -1,4 +1,4 @@
-Copyright (c) ${year} Checkmarx
+Copyright (c) 2017 Checkmarx
 
 This software is licensed for customer's internal use only.
  
