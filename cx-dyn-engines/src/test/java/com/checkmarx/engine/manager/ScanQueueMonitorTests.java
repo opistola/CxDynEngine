@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,13 +43,16 @@ public class ScanQueueMonitorTests extends SpringUnitTest {
 	@Autowired
 	private CxRestClient cxClient;
 	
+	@BeforeClass
+	public static void before() {
+		Assume.assumeTrue(runIntegrationTests());
+	}
+	
 	@Before
 	public void setUp() throws Exception {
 		log.trace("setup()");
 
 		assertThat(monitor, is(notNullValue()));
-
-		Assume.assumeTrue(super.runIntegrationTests());
 
 		cxClient.login();
 		cxClient.blockEngine(1);
@@ -58,7 +62,6 @@ public class ScanQueueMonitorTests extends SpringUnitTest {
 	public void tearDown() {
 		log.trace("tearDown()");
 
-		Assume.assumeTrue(super.runIntegrationTests());
 		cxClient.unblockEngine(1);
 	}
 	
@@ -66,8 +69,6 @@ public class ScanQueueMonitorTests extends SpringUnitTest {
 	public void test() throws Exception {
 		log.trace("test()");
 		
-		Assume.assumeTrue(super.runIntegrationTests());
-
 		final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 		service.scheduleAtFixedRate(monitor, 0L, 5, TimeUnit.SECONDS);
 		

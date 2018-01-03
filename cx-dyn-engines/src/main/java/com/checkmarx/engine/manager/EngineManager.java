@@ -375,7 +375,8 @@ public class EngineManager implements Runnable {
 				
 				final DynamicEngine engine = cxEngines.get(engineId);
 				unRegisterEngine(engineId);
-				engine.setState(State.IDLE);
+				pool.idleEngine(engine);
+				//engine.setState(State.IDLE);
 				
 				engineScans.remove(scanId);
 				cxEngines.remove(engineId);

@@ -41,9 +41,6 @@ public class AwsEnginesTest extends SpringUnitTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEnginesTest.class);
 
-	private final boolean runTest = false;  //uncomment next line to run this test
-	//private final boolean runTest = true;
-	
 	private final String NAME = "cx-engine-test-01";
 	private final List<DynamicEngine> runningEngines = Lists.newArrayList();
 	
@@ -103,8 +100,8 @@ public class AwsEnginesTest extends SpringUnitTest {
 	public void testLaunchAndStop() throws Exception {
 		log.trace("testLaunchAndStop()");
 		
-		Assume.assumeTrue(runTest);
-
+		Assume.assumeTrue(super.runIntegrationTests());
+		
 		final EngineSize size = new EngineSize("S", 1, 50000);
 		final DynamicEngine engine = new DynamicEngine(NAME, size.getName(), 300);
 		log.debug("Pre-launch: {}", engine);

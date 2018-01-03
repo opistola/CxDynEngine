@@ -28,7 +28,6 @@ public class CxConfig {
 	private String password;
 	private int concurrentScanLimit;
 	private String cxEnginePrefix = "**";
-	private String enginePoolPrefix = "cx-engine";
 	private int expireEngineBufferMins = 1;
 	private int idleMonitorSecs = 15;
 	private int queueCapacity = 100;
@@ -62,6 +61,11 @@ public class CxConfig {
 		this.concurrentScanLimit = concurrentScanLimit;
 	}
 
+	/**
+	 * @return the prefix to append to the engine name registered with CxManager.
+	 * 			Default value is {@code '**'}.  This can be used to distinguish
+	 * 			dynamic engines from non-dynamic engines. 
+	 */
 	public String getCxEnginePrefix() {
 		return cxEnginePrefix;
 	}
@@ -70,20 +74,12 @@ public class CxConfig {
 		this.cxEnginePrefix = cxEnginePrefix;
 	}
 
-	public String getEnginePoolPrefix() {
-		return enginePoolPrefix;
-	}
-
 	public int getExpireEngineBufferMins() {
 		return expireEngineBufferMins;
 	}
 
 	public void setExpireEngineBufferMins(int expireEngineBufferMins) {
 		this.expireEngineBufferMins = expireEngineBufferMins;
-	}
-
-	public void setEnginePoolPrefix(String enginePoolPrefix) {
-		this.enginePoolPrefix = enginePoolPrefix;
 	}
 
 	public int getIdleMonitorSecs() {
@@ -162,7 +158,6 @@ public class CxConfig {
 				.add("concurrentScanLimit", concurrentScanLimit)
 				.add("cxEnginePrefix", cxEnginePrefix)
 				.add("cxEngineUrlPath", cxEngineUrlPath)
-				.add("enginePoolPrefix", enginePoolPrefix)
 				.add("expireEngineBufferMins", expireEngineBufferMins)
 				.add("idleMonitorSecs", idleMonitorSecs)
 				.add("queueCapacity", queueCapacity)

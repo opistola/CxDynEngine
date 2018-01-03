@@ -22,10 +22,12 @@ import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.checkmarx.engine.domain.DynamicEngine;
+import com.checkmarx.engine.domain.EnginePoolConfig;
 import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
 import com.checkmarx.engine.manager.EngineProvisioner;
@@ -45,6 +47,7 @@ import com.google.common.collect.Maps;
  *
  */
 @Component
+@Profile("aws")
 public class AwsEngines implements EngineProvisioner {
 
 	private static final Logger log = LoggerFactory.getLogger(AwsEngines.class);
@@ -52,7 +55,8 @@ public class AwsEngines implements EngineProvisioner {
 	//TODO: inject scripting ExecutorService via constructor
 	private final ExecutorService executor = ExecutorServiceUtils.buildPooledExecutorService(20, "eng-scripts-%d", false);
 
-	private final AwsEngineConfig config;
+	private final AwsEngineConfig awsConfig;
+	private final EnginePoolConfig poolConfig;
 	private final AwsComputeClient ec2Client;
 	private final CxRestClient cxClient;
 	private final int pollingMillis;
@@ -70,14 +74,16 @@ public class AwsEngines implements EngineProvisioner {
 	private final Map<String, String> engineTypeMap;
 	
 	public AwsEngines(
+			EnginePoolConfig poolConfig,
 			AwsComputeClient awsClient, 
 			CxRestClient engineClient) {
 		
+		this.poolConfig = poolConfig;
 		this.ec2Client = awsClient;
-		this.config = awsClient.getConfig(); 
+		this.awsConfig = awsClient.getConfig(); 
 		this.cxClient = engineClient;
-		this.engineTypeMap = config.getEngineSizeMap();
-		this.pollingMillis = config.getMonitorPollingIntervalSecs() * 1000;
+		this.engineTypeMap = awsConfig.getEngineSizeMap();
+		this.pollingMillis = awsConfig.getMonitorPollingIntervalSecs() * 1000;
 		
 		log.info("ctor(): {}", this);
 	}
@@ -93,10 +99,10 @@ public class AwsEngines implements EngineProvisioner {
 	
 	private Map<String, String> createEngineTags(String size) {
 		log.trace("createEngineTags(): size={}", size);
-		final Map<String, String> tags = createCxTags(CxServerRole.ENGINE, config.getCxVersion());
+		final Map<String, String> tags = createCxTags(CxServerRole.ENGINE, awsConfig.getCxVersion());
 		tags.put(CX_SIZE_TAG, size);
 		// add custom tags from configuration
-		config.getTagMap().forEach( (tag,value) -> {
+		awsConfig.getTagMap().forEach( (tag,value) -> {
 			tags.put(tag, value);
 		});
 		return tags;
@@ -144,7 +150,7 @@ public class AwsEngines implements EngineProvisioner {
 		final DateTime launchTime = new DateTime(instance.getLaunchTime());
 		final boolean isRunning = Ec2.isRunning(instance);
 		final DynamicEngine engine = DynamicEngine.fromProvisionedInstance(
-				name, size, config.getEngineExpireIntervalSecs(),
+				name, size, poolConfig.getEngineExpireIntervalSecs(),
 				launchTime, isRunning);
 		if (isRunning) {
 			engine.setHost(createHost(name, instance));
@@ -156,7 +162,7 @@ public class AwsEngines implements EngineProvisioner {
 		String sizeTag = Ec2.getTag(instance, CX_SIZE_TAG);
 		if (!Strings.isNullOrEmpty(sizeTag)) return sizeTag;
 		
-		final Map<String, String> sizeMap = config.getEngineSizeMap();
+		final Map<String, String> sizeMap = awsConfig.getEngineSizeMap();
 		
 		for (Entry<String,String> entry : sizeMap.entrySet()) {
 			String instanceType = entry.getValue();
@@ -206,7 +212,7 @@ public class AwsEngines implements EngineProvisioner {
 			if (waitForSpinup) {
 				pingEngine(host);
 			}
-			runScript(config.getScriptOnLaunch(), engine);
+			runScript(awsConfig.getScriptOnLaunch(), engine);
 			
 			//engine.setState(State.IDLE);
 			success = true;
@@ -245,12 +251,12 @@ public class AwsEngines implements EngineProvisioner {
 		final Stopwatch timer = Stopwatch.createStarted();
 		try {
 			
-			if (config.isTerminateOnStop() || forceTerminate) {	
+			if (awsConfig.isTerminateOnStop() || forceTerminate) {	
 				action = "TerminatedEngine";
 				ec2Client.terminate(instanceId);
 				provisionedEngines.remove(name);
 				//engine.setState(State.UNPROVISIONED);
-				runScript(config.getScriptOnTerminate(), engine);
+				runScript(awsConfig.getScriptOnTerminate(), engine);
 			} else {
 				ec2Client.stop(instanceId);
 				instance = ec2Client.describe(instanceId);
@@ -277,8 +283,8 @@ public class AwsEngines implements EngineProvisioner {
 	private Host createHost(final String name, final Instance instance) {
 		final String ip = instance.getPrivateIpAddress();
 		final String publicIp = instance.getPublicIpAddress();
-		final String cxIp = config.isUsePublicUrlForCx() ? publicIp : ip;
-		final String monitorIp = config.isUsePublicUrlForMonitor() ? publicIp : ip;
+		final String cxIp = awsConfig.isUsePublicUrlForCx() ? publicIp : ip;
+		final String monitorIp = awsConfig.isUsePublicUrlForMonitor() ? publicIp : ip;
 		final DateTime launchTime = new DateTime(instance.getLaunchTime());
 		return new Host(name, ip, publicIp, buildCxEngineUrl(cxIp), buildMonitorUrl(monitorIp), launchTime);
 	}
@@ -287,7 +293,7 @@ public class AwsEngines implements EngineProvisioner {
 		log.trace("pingEngine(): host={}", host);
 		
 		final TimeoutTask<Boolean> pingTask = 
-				new TimeoutTask<>("pingEngine", config.getCxEngineTimeoutSec(), TimeUnit.SECONDS);
+				new TimeoutTask<>("pingEngine", awsConfig.getCxEngineTimeoutSec(), TimeUnit.SECONDS);
 		try {
 			pingTask.execute(() -> {
 				while (!cxClient.pingEngine(host.getMonitorUrl())) {
@@ -331,7 +337,7 @@ public class AwsEngines implements EngineProvisioner {
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
-				.add("config", config)
+				.add("config", awsConfig)
 				.toString();
 	}
 

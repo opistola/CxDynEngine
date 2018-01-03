@@ -55,10 +55,14 @@ public class DynamicEngine implements Comparable<DynamicEngine> {
 	private Long scanId;
 	private EnginePool enginePool;
 
+	public EnginePool getEnginePool() {
+		return enginePool;
+	}
+
 	public void setEnginePool(EnginePool enginePool) {
 		this.enginePool = enginePool;
 	}
-
+	
 	public DynamicEngine(String name, String size, long expireDurationSecs) {
 		this(name, size, expireDurationSecs, null);
 	}

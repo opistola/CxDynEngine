@@ -42,6 +42,7 @@ public class EnginePoolTests {
 
 	private static final Logger log = LoggerFactory.getLogger(EnginePoolTests.class);
 
+	private EnginePoolConfig config;
 	private EnginePool pool;
 	
 	public static final EngineSize SMALL = new EngineSize("S", 0, 99999);
@@ -51,8 +52,10 @@ public class EnginePoolTests {
 	@Before
 	public void setUp() throws Exception {
 		log.trace("setup()");
+		
+		config = new EnginePoolConfig();
 
-		pool = new DefaultEnginePoolBuilder("cx-engine", 300)
+		pool = new DefaultEnginePoolBuilder(config)
 			.addEntry(new EnginePoolEntry(SMALL, 3))
 			.addEntry(new EnginePoolEntry(MEDIUM, 3))
 			.addEntry(new EnginePoolEntry(LARGE, 3))

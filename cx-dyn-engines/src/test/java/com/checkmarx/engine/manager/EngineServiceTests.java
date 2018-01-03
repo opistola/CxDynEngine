@@ -39,7 +39,7 @@ public class EngineServiceTests extends SpringUnitTest {
 	public void setUp() throws Exception {
 		log.trace("setup()");
 
-		Assume.assumeTrue(super.runIntegrationTests());
+		//Assume.assumeTrue(super.runIntegrationTests());
 
 		assertThat(service, is(notNullValue()));
 	}

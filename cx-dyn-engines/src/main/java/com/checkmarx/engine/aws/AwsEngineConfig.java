@@ -14,15 +14,16 @@
 package com.checkmarx.engine.aws;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import com.checkmarx.engine.domain.EngineSize;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 
+@Profile("aws")
 @Configuration
 @ConfigurationProperties(prefix="cx-aws-engine")
 public class AwsEngineConfig {
@@ -30,7 +31,6 @@ public class AwsEngineConfig {
 	private boolean assignPublicIP;
 	private int cxEngineTimeoutSec=300;
 	private String cxVersion;
-	private int engineExpireIntervalSecs = Math.toIntExact(TimeUnit.MINUTES.toSeconds(60));
 	private String iamProfile;
 	private String imageId;
 	private String keyName;
@@ -98,14 +98,6 @@ public class AwsEngineConfig {
 
 	public void setImageId(String imageId) {
 		this.imageId = imageId;
-	}
-
-	public int getEngineExpireIntervalSecs() {
-		return engineExpireIntervalSecs;
-	}
-
-	public void setEngineExpireIntervalSecs(int instanceExpireIntervalSecs) {
-		this.engineExpireIntervalSecs = instanceExpireIntervalSecs;
 	}
 
 	public String getKeyName() {
@@ -238,7 +230,6 @@ public class AwsEngineConfig {
 				.add("assignPublicIP", assignPublicIP)
 				.add("cxEngineTimeoutSec", cxEngineTimeoutSec)
 				.add("cxVersion", cxVersion)
-				.add("engineExpireIntervalSecs", engineExpireIntervalSecs)
 				.add("iamProfile", iamProfile)
 				.add("imageId", imageId)
 				.add("keyName", keyName)

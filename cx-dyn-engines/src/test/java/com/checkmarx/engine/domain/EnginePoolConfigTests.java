@@ -16,6 +16,7 @@ package com.checkmarx.engine.domain;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.number.OrderingComparison.greaterThan;
 
 import java.util.List;
 
@@ -45,6 +46,9 @@ public class EnginePoolConfigTests extends SpringUnitTest {
 		log.trace("test()");
 		
 		log.info("{}", config);
+		
+		assertThat(config.getEnginePrefix(), is("cx-engine"));
+		assertThat(config.getEngineExpireIntervalSecs(), is(greaterThan(1)));
 		
 		final List<EnginePoolEntry> pool = config.getPool();
 		assertThat(pool, notNullValue());

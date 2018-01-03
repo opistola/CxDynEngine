@@ -6,11 +6,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@ActiveProfiles("test")
+@ActiveProfiles({"test","aws"})
 @SpringBootTest
 public abstract class SpringUnitTest {
 
-	public boolean runIntegrationTests() {
+	public static boolean runIntegrationTests() {
 		return false;
 	}
 

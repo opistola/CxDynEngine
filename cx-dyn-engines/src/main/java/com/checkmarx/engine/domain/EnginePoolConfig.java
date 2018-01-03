@@ -14,6 +14,7 @@
 package com.checkmarx.engine.domain;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,29 @@ public class EnginePoolConfig {
 
 	private final List<EnginePoolEntry> pool = Lists.newArrayList();
 	
+	private int engineExpireIntervalSecs = Math.toIntExact(TimeUnit.MINUTES.toSeconds(60));
+	private String enginePrefix = "cx-engine";
+
+	public int getEngineExpireIntervalSecs() {
+		return engineExpireIntervalSecs;
+	}
+
+	public void setEngineExpireIntervalSecs(int engineExpireIntervalSecs) {
+		this.engineExpireIntervalSecs = engineExpireIntervalSecs;
+	}
+
+	/**
+	 * @return The prefix used for IAAS engine server names.
+	 * 		Default value is {@code cx-engine}.
+	 */
+	public String getEnginePrefix() {
+		return enginePrefix;
+	}
+
+	public void setEnginePrefix(String enginePrefix) {
+		this.enginePrefix = enginePrefix;
+	}
+
 	public List<EnginePoolEntry> getPool() {
 		return pool;
 	}
@@ -48,6 +72,8 @@ public class EnginePoolConfig {
 
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
+				.add("engineExpireIntervalSecs", engineExpireIntervalSecs)
+				.add("enginePrefix", getEnginePrefix())
 				.add("enginePool", "[" + printEnginePool() + "]")
 				.toString();
 	}

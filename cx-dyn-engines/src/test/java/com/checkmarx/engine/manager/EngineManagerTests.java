@@ -42,6 +42,8 @@ public class EngineManagerTests extends SpringUnitTest {
 	@Before
 	public void setUp() throws Exception {
 		
+		Assume.assumeTrue(super.runIntegrationTests());
+		
 		assertThat(engineManager, notNullValue());
 		assertThat(cxClient, notNullValue());
 		assertThat(cxClient.login(), is(true));
@@ -50,8 +52,6 @@ public class EngineManagerTests extends SpringUnitTest {
 	@Test
 	public void testShutdown() throws InterruptedException {
 		log.trace("testShutdown()");
-		
-		Assume.assumeTrue(super.runIntegrationTests());
 		
 		engineManager.run();
 		TimeUnit.SECONDS.sleep(10);

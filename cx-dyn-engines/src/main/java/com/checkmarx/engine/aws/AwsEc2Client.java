@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.AmazonClientException;
@@ -57,6 +58,7 @@ import com.google.common.collect.Lists;
  *
  */
 @Component
+@Profile("aws")
 public class AwsEc2Client implements AwsComputeClient {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEc2Client.class);

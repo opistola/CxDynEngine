@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.assertj.core.util.Lists;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -56,6 +57,9 @@ public class CxRestClientTests extends SpringUnitTest {
 
 	@Before
 	public void setUp() throws Exception {
+		
+		Assume.assumeTrue(super.runIntegrationTests());
+		
 		assertThat(cxClient, notNullValue());
 		assertThat(engineUrl, is(not(isEmptyOrNullString())));
 		log.debug("engineUrl={}", engineUrl);
@@ -92,7 +96,7 @@ public class CxRestClientTests extends SpringUnitTest {
 		}
 
 		final EngineServer engine = engines.get(0);
-		assertThat(engine.getName(), is("Localhost"));
+		assertThat(engine.getName().toUpperCase(), is("Localhost".toUpperCase()));
 		//assertThat(engine.isAlive(), is(true));
 		//assertThat(engine.isBlocked(), is(false));
 		

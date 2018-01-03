@@ -40,9 +40,6 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEc2ClientTests.class);
 	
-	//private final boolean runTest = false;  //uncomment next line to run this test
-	private final boolean runTest = true;
-	
 	@Autowired
 	private AwsComputeClient ec2Client;
 	
@@ -55,6 +52,8 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	public void setUp() throws Exception {
 		log.trace("setup()");
 	
+		Assume.assumeTrue(super.runIntegrationTests());
+
 		assertThat(ec2Client, is(notNullValue()));
 		assertThat(config, is(notNullValue()));
 	}
@@ -70,8 +69,6 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	public void testLaunch() {
 		log.trace("testLaunch()");
 		
-		Assume.assumeTrue(runTest);
-
 		final String name = "cx-test1";
 		final String instanceType = "t2.small";
 		//final String instanceType = "m4.large";
@@ -97,8 +94,6 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	public void testTerminate() {
 		log.trace("testTerminate()");
 		
-		Assume.assumeTrue(runTest);
-
 		final String instanceId = "i-05bb6ec6c7aba753c";
 		ec2Client.terminate(instanceId);
 	}
@@ -106,8 +101,6 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	@Test
 	public void testDescribe() {
 		log.trace("testDescribe()");
-
-		Assume.assumeTrue(runTest);
 
 		final String instanceId = "i-0e34e0f752b8ac04f";
 		
