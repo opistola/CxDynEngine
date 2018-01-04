@@ -8,7 +8,8 @@ Features
 [X] Handle no available engines
 [X] Add property (password) encryption
 [X] Add engine launch/terminate scripting hooks (JSR-223)
-[ ] Factor EnginePool out of AwsEngineConfig
+[X] Factor EnginePool out of AwsEngineConfig
+[ ] Move cx credentials out of CxConfig
 [ ] Add command for creating encrypted values
 [ ] Add AWS credentials
 [ ] Add minimum provisioned engines
