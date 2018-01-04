@@ -1,0 +1,5 @@
+rootProject.name = 'cx-dyn-engines-parent'
+
+include 'cx-dyn-engines'
+include 'cx-dyn-engines-aws'
+//include 'cx-dyn-engines-vmware'

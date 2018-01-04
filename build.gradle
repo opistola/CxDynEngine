@@ -1,0 +1,76 @@
+allprojects {
+    group = 'com.checkmarx'
+    version = '0.7.0-SNAPSHOT'
+
+    apply plugin: 'eclipse'
+
+    task wrapper(type: Wrapper) {
+        gradleVersion = '4.1'
+    }
+}
+
+description = 'Checkmarx SAST Dynamic Engines Parent Module'
+
+buildscript {
+    ext {
+        springBootVersion = '1.5.9.RELEASE'
+        springGradleVersion = '1.0.4.RELEASE'
+    }
+    
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}") 
+        classpath("io.spring.gradle:dependency-management-plugin:${springGradleVersion}")
+    }
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    
+    eclipse {
+        classpath {
+           downloadSources=true
+           downloadJavadoc=true
+        }
+    }
+
+    dependencies {
+        compile(
+            'org.springframework.boot:spring-boot-starter-web',
+            'org.springframework.boot:spring-boot-starter-aop',
+            'org.springframework:spring-web',
+            'org.springframework.retry:spring-retry',
+            'com.google.guava:guava',
+            'joda-time:joda-time',
+            'com.fasterxml.jackson.datatype:jackson-datatype-joda',
+            'com.amazonaws:aws-java-sdk-ec2',
+            'commons-io:commons-io:2.6',
+            'com.github.ulisesbocchio:jasypt-spring-boot-starter:1.16',
+            'org.apache.commons:commons-lang3:3.6',
+            //'org.python:jython-standalone:2.7.1',
+            'org.codehaus.groovy:groovy-all'
+        )
+        testCompile('org.springframework.boot:spring-boot-starter-test')
+    }
+    
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Camden.SR7'
+            mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.159'
+        }
+    }
+}
