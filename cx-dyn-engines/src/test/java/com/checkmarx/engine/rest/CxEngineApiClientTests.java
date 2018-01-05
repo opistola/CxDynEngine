@@ -35,13 +35,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.HttpClientErrorException;
 
-import com.checkmarx.engine.SpringUnitTest;
+import com.checkmarx.engine.SdkSpringTest;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 
 @TestPropertySource("/application-test.properties")
-public class CxEngineApiClientTests extends SpringUnitTest {
+public class CxEngineApiClientTests extends SdkSpringTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(CxEngineApiClientTests.class);
 

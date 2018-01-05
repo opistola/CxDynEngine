@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CxConfigTests extends SpringUnitTest {
+public class CxConfigTests extends SdkSpringTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(CxConfigTests.class);
 	

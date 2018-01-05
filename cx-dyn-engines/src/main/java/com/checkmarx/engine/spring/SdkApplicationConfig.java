@@ -15,8 +15,9 @@ package com.checkmarx.engine.spring;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.annotation.EnableRetry;
 
 import com.checkmarx.engine.CxConfig;
@@ -31,10 +32,20 @@ import com.checkmarx.engine.servers.EngineManager;
 import com.checkmarx.engine.servers.ScanQueueMonitor;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
-@Configuration
+/**
+ * Spring Boot configuration
+ * 
+ * @author randy@checkmarx.com
+ */
 @EnableRetry
-public class ApplicationConfig {
+public class SdkApplicationConfig {
 	
+	private static final Logger log = LoggerFactory.getLogger(SdkApplicationConfig.class);
+	
+	public SdkApplicationConfig() {
+		log.info("ctor()");
+	}
+
 	@Bean
 	public JodaModule jacksonJodaModule() {
 		return new JodaModule();
@@ -62,7 +73,7 @@ public class ApplicationConfig {
 	}
 	
 	@Bean
-	public EngineManager engineMonitor(
+	public EngineManager engineManager(
 			CxConfig config,
 			EnginePool enginePool,
 			CxEngineApi cxClient,

@@ -1,44 +1,17 @@
-description = 'Manages Dynamic Engines for Checkmarx SAST solution'
+description = 'Checkmarx CxSAST Dynamic Engine SDK'
+
+dependencies {
+}
 
 jar {
     manifest {
-        attributes("Implementation-Title": "Checkmarx Dynamic Engine Manager",
+        attributes("Implementation-Title": "Checkmarx CxSAST Dynamic Engine SDK",
                    "Implementation-Version": version)
     }
 }
 
-bootRun {
-    // required for passing JVM system properties via the gradle command line
-    systemProperties = System.properties
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives sourcesJar
-}
-
-task zip(type: Zip) {
-    dependsOn bootRepackage
-    from 'src/main/resources/dist'
-    from jar
-    into 'cx-dyn-engines'
-}
-
-task dist(type: Copy) {
-    dependsOn zip
-    from 'build/distributions'
-    from 'build/libs'
-    into '../archive/'
-    include '*-sources.jar'
-    include '*.zip'
-    rename { String fileName ->
-        fileName.replace('.jar', '.zip')
-    }
-    rename { String fileName ->
-        fileName.replace('-SNAPSHOT', '')
-    }
+// Prevents submodule dependencies from being included in the common jar itself.
+// Without this, each subproject that included common would include each shared dependency twice.
+bootRepackage {
+    enabled = false
 }

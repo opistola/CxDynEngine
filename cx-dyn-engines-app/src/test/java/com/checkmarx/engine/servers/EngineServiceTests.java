@@ -25,13 +25,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 
-import com.checkmarx.engine.SpringUnitTest;
+import com.checkmarx.engine.app.AppSpringTest;
 import com.checkmarx.engine.servers.EngineService;
 
-public class EngineServiceTests extends SpringUnitTest {
+@ActiveProfiles({ "test", "aws" } )
+public class EngineServiceTests extends AppSpringTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(EngineServiceTests.class);
+	
+	private boolean runTest = false;
 
 	@Autowired
 	private EngineService service;
@@ -40,7 +44,7 @@ public class EngineServiceTests extends SpringUnitTest {
 	public void setUp() throws Exception {
 		log.trace("setup()");
 
-		Assume.assumeTrue(super.runCxIntegrationTests());
+		Assume.assumeTrue(super.runAppIntegrationTests());
 		assertThat(service, is(notNullValue()));
 	}
 	
@@ -48,6 +52,8 @@ public class EngineServiceTests extends SpringUnitTest {
 	public void testRun() throws Exception {
 		log.trace("testRun()");
 		
+		Assume.assumeTrue(runTest);
+
 		service.run();
 		TimeUnit.MINUTES.sleep(60);
 		service.stop();

@@ -30,11 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.checkmarx.engine.SpringUnitTest;
+import com.checkmarx.engine.SdkSpringTest;
 import com.checkmarx.engine.rest.CxEngineApi;
 import com.checkmarx.engine.servers.ScanQueueMonitor;
 
-public class ScanQueueMonitorTests extends SpringUnitTest {
+public class ScanQueueMonitorTests extends SdkSpringTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(ScanQueueMonitorTests.class);
 

@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine;
+package com.checkmarx.engine.app;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -19,16 +19,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.checkmarx.engine.servers.ScanQueueMonitor;
+import com.checkmarx.engine.servers.EngineService;
 
-public class CxDynEnginesApplicationTests extends SpringUnitTest {
+public class ApplicationTests extends AppSpringTest {
 
 	@Autowired
-	private ScanQueueMonitor scanQueueMonitor;
+	private EngineService engineService;
 	
 	@Test
 	public void contextLoads() {
-		assertThat(scanQueueMonitor, notNullValue());
+		assertThat(engineService, notNullValue());
 	}
 
 }

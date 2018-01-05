@@ -36,7 +36,7 @@ import com.checkmarx.engine.servers.CxEngines;
 import com.checkmarx.engine.servers.CxEngines.CxServerRole;
 import com.google.common.collect.Lists;
 
-public class AwsEc2ClientTests extends AwsSpringUnitTest {
+public class AwsEc2ClientTests extends AwsSpringTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEc2ClientTests.class);
 	

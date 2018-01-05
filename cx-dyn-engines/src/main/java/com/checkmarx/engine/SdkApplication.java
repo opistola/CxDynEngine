@@ -11,17 +11,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.checkmarx.engine.aws;
+package com.checkmarx.engine;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
+
+import com.checkmarx.engine.spring.SdkApplicationConfig;
 
 /**
  * Enable Spring Boot's autoconfiguration
  *  
  * @author randy@checkmarx.com
  */
-@SpringBootApplication(scanBasePackages="com.checkmarx.engine")
-public class AwsApplication {
+@SpringBootApplication
+@Import(SdkApplicationConfig.class)
+public class SdkApplication {
 	
 	// placeholder
 	

@@ -36,7 +36,7 @@ import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
 import com.google.common.collect.Lists;
 
-public class AwsEnginesTest extends AwsSpringUnitTest {
+public class AwsEnginesTest extends AwsSpringTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEnginesTest.class);
 

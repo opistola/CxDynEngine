@@ -11,18 +11,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.checkmarx.engine.aws;
+package com.checkmarx.engine.app;
 
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+
+import com.checkmarx.engine.spring.SdkApplicationConfig;
 
 /**
- * Enable Spring Boot's autoconfiguration
- *  
+ * Spring Boot configuration
+ * 
  * @author randy@checkmarx.com
  */
-@SpringBootApplication(scanBasePackages="com.checkmarx.engine")
-public class AwsApplication {
+@Configuration
+@Import(SdkApplicationConfig.class)
+public class ApplicationConfig {
 	
-	// placeholder
+	private static final Logger log = LoggerFactory.getLogger(ApplicationConfig.class);
 	
+	public ApplicationConfig() {
+		log.info("ctor()");
+	}
+
 }

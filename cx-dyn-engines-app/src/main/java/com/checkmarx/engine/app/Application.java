@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine;
+package com.checkmarx.engine.app;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +24,13 @@ import org.springframework.context.annotation.Profile;
 import com.checkmarx.engine.servers.EngineService;
 import com.checkmarx.engine.utils.ScriptingUtils;
 
-@SpringBootApplication
-public class CxDynEnginesApplication {
+@SpringBootApplication(scanBasePackages="com.checkmarx.engine")
+public class Application {
 	
-	private static final Logger log = LoggerFactory.getLogger(CxDynEnginesApplication.class);
+	private static final Logger log = LoggerFactory.getLogger(Application.class);
 
 	public static void main(String[] args) {
-		SpringApplication.run(CxDynEnginesApplication.class, args);
+		SpringApplication.run(Application.class, args);
 	}
 	
 	@Bean
@@ -38,7 +38,7 @@ public class CxDynEnginesApplication {
 	CommandLineRunner run(EngineService service) {
 		return args -> {
 			
-			log.info("CxDynEnginesApplication.run()");
+			log.info("Application.run()");
 			
 			ScriptingUtils.logScriptingEngines();
 			

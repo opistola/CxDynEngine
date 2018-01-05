@@ -1,20 +1,14 @@
-description = 'Checkmarx Dynamic Engines AWS library'
+description = 'Checkmarx CxSAST Dynamic Engine AWS Library'
 
 dependencies {
     compile project(':cx-dyn-engines')
-    compile('com.amazonaws:aws-java-sdk-ec2')
-	compileOnly('org.springframework.boot:spring-boot-configuration-processor')
-}
-
-dependencyManagement {
-    imports {
-        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.159'
-    }
+    compile(
+        'com.amazonaws:aws-java-sdk-ec2'
+    )
 }
 
 jar {
     baseName = 'cx-dyn-engines-aws'
-    //version = '0.0.1-SNAPSHOT'
 
     manifest {
         attributes("Implementation-Title": "Checkmarx Dynamic Engines AWS Library",
