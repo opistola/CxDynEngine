@@ -30,14 +30,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.amazonaws.services.ec2.model.Instance;
-import com.checkmarx.engine.SpringUnitTest;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
 import com.google.common.collect.Lists;
 
-public class AwsEnginesTest extends SpringUnitTest {
+public class AwsEnginesTest extends AwsSpringUnitTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEnginesTest.class);
 
@@ -100,7 +99,7 @@ public class AwsEnginesTest extends SpringUnitTest {
 	public void testLaunchAndStop() throws Exception {
 		log.trace("testLaunchAndStop()");
 		
-		Assume.assumeTrue(super.runIntegrationTests());
+		Assume.assumeTrue(super.runAwsIntegrationTests());
 		
 		final EngineSize size = new EngineSize("S", 1, 50000);
 		final DynamicEngine engine = new DynamicEngine(NAME, size.getName(), 300);

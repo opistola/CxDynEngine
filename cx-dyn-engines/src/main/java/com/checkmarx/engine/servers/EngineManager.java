@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.manager;
+package com.checkmarx.engine.servers;
 
 import java.util.List;
 import java.util.Map;
@@ -36,10 +36,11 @@ import com.checkmarx.engine.domain.DynamicEngine.State;
 import com.checkmarx.engine.domain.EnginePool;
 import com.checkmarx.engine.domain.EnginePool.IdleEngineMonitor;
 import com.checkmarx.engine.domain.EngineSize;
-import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.rest.CxEngineApi;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.rest.model.ScanRequest;
 import com.checkmarx.engine.utils.ExecutorServiceUtils;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
@@ -49,9 +50,9 @@ public class EngineManager implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(EngineManager.class);
 
 	private final CxConfig config;
-	private final CxRestClient cxClient;
+	private final CxEngineApi cxClient;
 	private final EnginePool pool;
-	private final EngineProvisioner engineProvisioner;
+	private final CxEngines engineProvisioner;
 	private final BlockingQueue<ScanRequest> queuedScansQueue;
 	private final BlockingQueue<ScanRequest> finshedScansQueue;
 	private final BlockingQueue<DynamicEngine> expiredEnginesQueue;
@@ -92,8 +93,8 @@ public class EngineManager implements Runnable {
 	public EngineManager(
 			CxConfig config,
 			EnginePool pool, 
-			CxRestClient cxClient,
-			EngineProvisioner engineProvisioner,
+			CxEngineApi cxClient,
+			CxEngines engineProvisioner,
 			BlockingQueue<ScanRequest> scansQueued,
 			BlockingQueue<ScanRequest> scansFinished) {
 		this.pool = pool;
@@ -228,6 +229,7 @@ public class EngineManager implements Runnable {
 				log.error("Error occurred launching scan; cause={}; message={}", 
 						t, t.getMessage(), t); 
 				//TODO: add retry logic
+				blockScan(size, scan);
 			}
 		}
 
@@ -275,6 +277,11 @@ public class EngineManager implements Runnable {
 			log.trace("registerEngine(): fromState={}; {}; {}", fromState, scan, dynEngine);
 			
 			final Long scanId = scan.getId();
+			final String url = dynEngine.getUrl();
+			if (Strings.isNullOrEmpty(url)) {
+				final String msg = String.format("Cannot register Engine, url is null: %s", dynEngine);
+				throw new RuntimeException(msg);
+			}
 			EngineServer cxEngine = createEngine(dynEngine.getName(), scan, dynEngine.getUrl());
 			cxEngine = registerCxEngine(scanId, cxEngine);
 			

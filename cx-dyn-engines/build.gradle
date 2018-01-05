@@ -1,22 +1,15 @@
 description = 'Manages Dynamic Engines for Checkmarx SAST solution'
 
-test {
-    // sets jasypt key for unit tests
-    //  if you want specify a different key add -Djasypt.encryptor.password=<key> on gradle command line,
-    //  e.g. ./gradlew build -Djasypt.encryptor.password=changeme
-    systemProperty "jasypt.encryptor.password", System.getProperty("jasypt.encryptor.password") ?: "CxR0cks!!"
-}
-
-bootRun {
-    // required for passing JVM system properties via the gradle command line
-    systemProperties = System.properties
-}
-
 jar {
     manifest {
         attributes("Implementation-Title": "Checkmarx Dynamic Engine Manager",
                    "Implementation-Version": version)
     }
+}
+
+bootRun {
+    // required for passing JVM system properties via the gradle command line
+    systemProperties = System.properties
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {

@@ -11,70 +11,55 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.manager;
+package com.checkmarx.engine.servers;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.checkmarx.engine.SpringUnitTest;
-import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.servers.EngineService;
 
-public class ScanQueueMonitorTests extends SpringUnitTest {
+public class EngineServiceTests extends SpringUnitTest {
 	
-	private static final Logger log = LoggerFactory.getLogger(ScanQueueMonitorTests.class);
+	private static final Logger log = LoggerFactory.getLogger(EngineServiceTests.class);
 
 	@Autowired
-	private ScanQueueMonitor monitor;
-	
-	@Autowired
-	private CxRestClient cxClient;
-	
-	@BeforeClass
-	public static void before() {
-		Assume.assumeTrue(runIntegrationTests());
-	}
+	private EngineService service;
 	
 	@Before
 	public void setUp() throws Exception {
 		log.trace("setup()");
 
-		assertThat(monitor, is(notNullValue()));
-
-		cxClient.login();
-		cxClient.blockEngine(1);
-	}
-	
-	@After
-	public void tearDown() {
-		log.trace("tearDown()");
-
-		cxClient.unblockEngine(1);
+		Assume.assumeTrue(super.runCxIntegrationTests());
+		assertThat(service, is(notNullValue()));
 	}
 	
 	@Test
-	public void test() throws Exception {
-		log.trace("test()");
+	public void testRun() throws Exception {
+		log.trace("testRun()");
 		
-		final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-		service.scheduleAtFixedRate(monitor, 0L, 5, TimeUnit.SECONDS);
-		
-		TimeUnit.MINUTES.sleep(1);
-		
-		service.shutdownNow();
+		service.run();
+		TimeUnit.MINUTES.sleep(60);
+		service.stop();
 	}
-	
+
+	@Test
+	public void testShutdown() throws Exception {
+		log.trace("testShutdown()");
+		
+		service.run();
+		TimeUnit.SECONDS.sleep(5);
+		service.stop();
+	}
+
 }

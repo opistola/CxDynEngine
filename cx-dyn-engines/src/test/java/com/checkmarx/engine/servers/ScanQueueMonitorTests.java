@@ -11,54 +11,71 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.manager;
+package com.checkmarx.engine.servers;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.checkmarx.engine.SpringUnitTest;
+import com.checkmarx.engine.rest.CxEngineApi;
+import com.checkmarx.engine.servers.ScanQueueMonitor;
 
-public class EngineServiceTests extends SpringUnitTest {
+public class ScanQueueMonitorTests extends SpringUnitTest {
 	
-	private static final Logger log = LoggerFactory.getLogger(EngineServiceTests.class);
+	private static final Logger log = LoggerFactory.getLogger(ScanQueueMonitorTests.class);
 
 	@Autowired
-	private EngineService service;
+	private ScanQueueMonitor monitor;
+	
+	@Autowired
+	private CxEngineApi cxClient;
+	
+	@BeforeClass
+	public static void before() {
+		Assume.assumeTrue(runCxIntegrationTests());
+	}
 	
 	@Before
 	public void setUp() throws Exception {
 		log.trace("setup()");
 
-		Assume.assumeTrue(super.runIntegrationTests());
-		assertThat(service, is(notNullValue()));
+		assertThat(monitor, is(notNullValue()));
+
+		cxClient.login();
+		cxClient.blockEngine(1);
+	}
+	
+	@After
+	public void tearDown() {
+		log.trace("tearDown()");
+
+		cxClient.unblockEngine(1);
 	}
 	
 	@Test
-	public void testRun() throws Exception {
-		log.trace("testRun()");
+	public void test() throws Exception {
+		log.trace("test()");
 		
-		service.run();
-		TimeUnit.MINUTES.sleep(60);
-		service.stop();
-	}
-
-	@Test
-	public void testShutdown() throws Exception {
-		log.trace("testShutdown()");
+		final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+		service.scheduleAtFixedRate(monitor, 0L, 5, TimeUnit.SECONDS);
 		
-		service.run();
-		TimeUnit.SECONDS.sleep(5);
-		service.stop();
+		TimeUnit.MINUTES.sleep(1);
+		
+		service.shutdownNow();
 	}
-
+	
 }

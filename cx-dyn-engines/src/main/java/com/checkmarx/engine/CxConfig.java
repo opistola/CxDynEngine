@@ -28,6 +28,7 @@ public class CxConfig {
 	private String password;
 	private int concurrentScanLimit;
 	private String cxEnginePrefix = "**";
+	private boolean cxEngineUseSSL = false;
 	private int expireEngineBufferMins = 1;
 	private int idleMonitorSecs = 15;
 	private int queueCapacity = 100;
@@ -72,6 +73,14 @@ public class CxConfig {
 
 	public void setCxEnginePrefix(String cxEnginePrefix) {
 		this.cxEnginePrefix = cxEnginePrefix;
+	}
+
+	public boolean isCxEngineUseSSL() {
+		return cxEngineUseSSL;
+	}
+
+	public void setCxEngineUseSSL(boolean cxEngineUseSSL) {
+		this.cxEngineUseSSL = cxEngineUseSSL;
 	}
 
 	public int getExpireEngineBufferMins() {
@@ -157,6 +166,7 @@ public class CxConfig {
 				.add("userName", userName)
 				.add("concurrentScanLimit", concurrentScanLimit)
 				.add("cxEnginePrefix", cxEnginePrefix)
+				.add("cxEngineUseSSL", cxEngineUseSSL)
 				.add("cxEngineUrlPath", cxEngineUrlPath)
 				.add("expireEngineBufferMins", expireEngineBufferMins)
 				.add("idleMonitorSecs", idleMonitorSecs)

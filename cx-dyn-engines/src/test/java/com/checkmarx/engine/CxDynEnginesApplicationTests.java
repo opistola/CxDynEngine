@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.checkmarx.engine.manager.ScanQueueMonitor;
+import com.checkmarx.engine.servers.ScanQueueMonitor;
 
 public class CxDynEnginesApplicationTests extends SpringUnitTest {
 

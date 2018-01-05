@@ -15,12 +15,10 @@ package com.checkmarx.engine.rest;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
-import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -43,27 +41,25 @@ import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 
 @TestPropertySource("/application-test.properties")
-public class CxRestClientTests extends SpringUnitTest {
+public class CxEngineApiClientTests extends SpringUnitTest {
 	
-	private static final Logger log = LoggerFactory.getLogger(CxRestClientTests.class);
+	private static final Logger log = LoggerFactory.getLogger(CxEngineApiClientTests.class);
 
 	@Autowired
-	private CxRestClient cxClient;
+	private CxEngineApiClient cxClient;
 	
-	@Value("${cx.test-engine-url}")
-	private String engineUrl;
+	@Value("${cx.test-engine-id}")
+	private Long engineId;
 	
 	private final List<Long> engineIds = Lists.newArrayList();
 
 	@Before
 	public void setUp() throws Exception {
 		
-		Assume.assumeTrue(super.runIntegrationTests());
+		Assume.assumeTrue(super.runCxIntegrationTests());
 		
 		assertThat(cxClient, notNullValue());
-		assertThat(engineUrl, is(not(isEmptyOrNullString())));
-		log.debug("engineUrl={}", engineUrl);
-
+		assertThat(engineId, notNullValue());
 		assertThat(login(), is(true));
 	}
 	
@@ -106,9 +102,9 @@ public class CxRestClientTests extends SpringUnitTest {
 	public void testGetEngine() {
 		log.trace("testGetEngine()");
 		
-		final EngineServer engine = cxClient.getEngine(1);
+		final EngineServer engine = cxClient.getEngine(engineId);
 		assertThat(engine, is(notNullValue()));
-		assertThat(engine.getId(), is(equalTo(1L)));
+		assertThat(engine.getId(), is(equalTo(engineId)));
 	}
 	
 	@Test(expected=HttpClientErrorException.class)
@@ -172,14 +168,6 @@ public class CxRestClientTests extends SpringUnitTest {
 		}
 	}
 	
-	@Test
-	public void testPingEngine() {
-		log.trace("testPingEngine()");
-
-		assertThat(cxClient.pingEngine(engineUrl), is(true));
-	}
-	
-
 	private EngineServer registerEngine(EngineServer engine) {
 		return cxClient.registerEngine(engine);
 	}

@@ -25,10 +25,10 @@ import com.checkmarx.engine.domain.EnginePool;
 import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 import com.checkmarx.engine.domain.EnginePoolConfig;
 import com.checkmarx.engine.domain.ScanQueue;
-import com.checkmarx.engine.manager.EngineManager;
-import com.checkmarx.engine.manager.EngineProvisioner;
-import com.checkmarx.engine.manager.ScanQueueMonitor;
-import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.rest.CxEngineApi;
+import com.checkmarx.engine.servers.CxEngines;
+import com.checkmarx.engine.servers.EngineManager;
+import com.checkmarx.engine.servers.ScanQueueMonitor;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 @Configuration
@@ -65,8 +65,8 @@ public class ApplicationConfig {
 	public EngineManager engineMonitor(
 			CxConfig config,
 			EnginePool enginePool,
-			CxRestClient cxClient,
-			EngineProvisioner engineProvisioner,
+			CxEngineApi cxClient,
+			CxEngines engineProvisioner,
 			ScanQueue scansQueued, ScanQueue scansFinished) {
 		
 		return new EngineManager(config, enginePool, cxClient, engineProvisioner, 
@@ -76,7 +76,7 @@ public class ApplicationConfig {
 	@Bean
 	public ScanQueueMonitor queueMonitor(
 			CxConfig config,
-			CxRestClient cxClient, 
+			CxEngineApi cxClient, 
 			ScanQueue scansQueued, 
 			ScanQueue scansFinished) {
 		return new ScanQueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient, config);

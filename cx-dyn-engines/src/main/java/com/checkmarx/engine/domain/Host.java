@@ -57,6 +57,10 @@ public class Host {
 	public String getIp() {
 		return privateIp;
 	}
+	
+	public String getPublicIp() {
+		return publicIp;
+	}
 
 	/**
 	 * Returns the url for the CxManager 

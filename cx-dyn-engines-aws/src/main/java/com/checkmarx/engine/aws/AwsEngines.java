@@ -30,8 +30,8 @@ import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.EnginePoolConfig;
 import com.checkmarx.engine.domain.EngineSize;
 import com.checkmarx.engine.domain.Host;
-import com.checkmarx.engine.manager.EngineProvisioner;
-import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.rest.CxEngineClient;
+import com.checkmarx.engine.servers.CxEngines;
 import com.checkmarx.engine.utils.ExecutorServiceUtils;
 import com.checkmarx.engine.utils.ScriptRunner;
 import com.checkmarx.engine.utils.TimeoutTask;
@@ -43,12 +43,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
- * @author rjgey
+ * AWS {@code CxEngines} provider.
+ * 
+ * @author randy@checkmarx.com
  *
  */
 @Component
 @Profile("aws")
-public class AwsEngines implements EngineProvisioner {
+public class AwsEngines implements CxEngines {
 
 	private static final Logger log = LoggerFactory.getLogger(AwsEngines.class);
 	
@@ -58,7 +60,7 @@ public class AwsEngines implements EngineProvisioner {
 	private final AwsEngineConfig awsConfig;
 	private final EnginePoolConfig poolConfig;
 	private final AwsComputeClient ec2Client;
-	private final CxRestClient cxClient;
+	private final CxEngineClient engineClient;
 	private final int pollingMillis;
 
 	/**
@@ -76,12 +78,12 @@ public class AwsEngines implements EngineProvisioner {
 	public AwsEngines(
 			EnginePoolConfig poolConfig,
 			AwsComputeClient awsClient, 
-			CxRestClient engineClient) {
+			CxEngineClient engineClient) {
 		
 		this.poolConfig = poolConfig;
 		this.ec2Client = awsClient;
 		this.awsConfig = awsClient.getConfig(); 
-		this.cxClient = engineClient;
+		this.engineClient = engineClient;
 		this.engineTypeMap = awsConfig.getEngineSizeMap();
 		this.pollingMillis = awsConfig.getMonitorPollingIntervalSecs() * 1000;
 		
@@ -286,7 +288,9 @@ public class AwsEngines implements EngineProvisioner {
 		final String cxIp = awsConfig.isUsePublicUrlForCx() ? publicIp : ip;
 		final String monitorIp = awsConfig.isUsePublicUrlForMonitor() ? publicIp : ip;
 		final DateTime launchTime = new DateTime(instance.getLaunchTime());
-		return new Host(name, ip, publicIp, buildCxEngineUrl(cxIp), buildMonitorUrl(monitorIp), launchTime);
+		return new Host(name, ip, publicIp, 
+				engineClient.buildEngineServiceUrl(cxIp), 
+				engineClient.buildEngineServiceUrl(monitorIp), launchTime);
 	}
 
 	private void pingEngine(Host host) throws Exception {
@@ -294,9 +298,10 @@ public class AwsEngines implements EngineProvisioner {
 		
 		final TimeoutTask<Boolean> pingTask = 
 				new TimeoutTask<>("pingEngine", awsConfig.getCxEngineTimeoutSec(), TimeUnit.SECONDS);
+		final String ip = awsConfig.isUsePublicUrlForMonitor() ? host.getPublicIp(): host.getIp();
 		try {
 			pingTask.execute(() -> {
-				while (!cxClient.pingEngine(host.getMonitorUrl())) {
+				while (!engineClient.pingEngine(ip)) {
 					log.trace("Engine ping failed, waiting to retry; sleep={}ms; {}", pollingMillis, host); 
 					TimeUnit.MILLISECONDS.sleep(pollingMillis);
 				}
@@ -322,16 +327,6 @@ public class AwsEngines implements EngineProvisioner {
 		} else {
 			log.debug("Script file not found: {}", scriptFile);
 		}
-	}
-
-	private String buildCxEngineUrl(String ip) {
-		if (Strings.isNullOrEmpty(ip)) return null;
-		final String host = "http://" + ip;
-		return cxClient.buildEngineServerUrl(host);
-	}
-
-	private String buildMonitorUrl(String ip) {
-		return "http://" + ip;
 	}
 
 	@Override

@@ -25,18 +25,18 @@ import java.util.Map;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.amazonaws.services.ec2.model.Instance;
-import com.checkmarx.engine.SpringUnitTest;
-import com.checkmarx.engine.manager.EngineProvisioner;
-import com.checkmarx.engine.manager.EngineProvisioner.CxServerRole;
+import com.checkmarx.engine.servers.CxEngines;
+import com.checkmarx.engine.servers.CxEngines.CxServerRole;
 import com.google.common.collect.Lists;
 
-public class AwsEc2ClientTests extends SpringUnitTest {
+public class AwsEc2ClientTests extends AwsSpringUnitTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsEc2ClientTests.class);
 	
@@ -52,7 +52,7 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	public void setUp() throws Exception {
 		log.trace("setup()");
 	
-		Assume.assumeTrue(super.runIntegrationTests());
+		Assume.assumeTrue(super.runAwsIntegrationTests());
 
 		assertThat(ec2Client, is(notNullValue()));
 		assertThat(config, is(notNullValue()));
@@ -78,11 +78,12 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 		final Map<String, String> tags = AwsEngines.createCxTags(role, version);
 		
 		final Instance instance = ec2Client.launch(name, instanceType, tags);
+		instances.add(instance.getInstanceId());
 		
 		assertNotNull(instance);
 		assertThat(Ec2.getName(instance), is(name));
-		assertThat(Ec2.getTag(instance, EngineProvisioner.CX_ROLE_TAG), is(role.toString()));
-		assertThat(Ec2.getTag(instance, EngineProvisioner.CX_VERSION_TAG), is(version));
+		assertThat(Ec2.getTag(instance, CxEngines.CX_ROLE_TAG), is(role.toString()));
+		assertThat(Ec2.getTag(instance, CxEngines.CX_VERSION_TAG), is(version));
 		assertEquals(instanceType, instance.getInstanceType());
 		assertEquals(config.getKeyName(), instance.getKeyName());
 		assertEquals(config.getImageId(), instance.getImageId());
@@ -91,6 +92,7 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	}
 	
 	@Test
+	@Ignore
 	public void testTerminate() {
 		log.trace("testTerminate()");
 		
@@ -99,9 +101,11 @@ public class AwsEc2ClientTests extends SpringUnitTest {
 	}
 
 	@Test
+	@Ignore
 	public void testDescribe() {
 		log.trace("testDescribe()");
 
+		// engine image instance for RJG
 		final String instanceId = "i-0e34e0f752b8ac04f";
 		
 		final Instance instance = ec2Client.describe(instanceId);

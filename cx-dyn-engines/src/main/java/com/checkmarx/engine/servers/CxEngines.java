@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.manager;
+package com.checkmarx.engine.servers;
 
 import java.util.List;
 
@@ -19,12 +19,11 @@ import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.EngineSize;
 
 /**
- * Manages provisioning of dynamic engines utilizing an underlying IaaS provider, e.g. AWS.
- * @see AwsEngines
+ * Handles provisioning of dynamic engines utilizing an underlying IaaS provider, e.g. AWS.
  * 
  * @author randy@checkmarx.com
  */
-public interface EngineProvisioner {
+public interface CxEngines {
 	
 	public static final String CX_ROLE_TAG = "cx-role";
 	public static final String CX_VERSION_TAG = "cx-version";

@@ -21,7 +21,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 
-import com.checkmarx.engine.manager.EngineService;
+import com.checkmarx.engine.servers.EngineService;
 import com.checkmarx.engine.utils.ScriptingUtils;
 
 @SpringBootApplication

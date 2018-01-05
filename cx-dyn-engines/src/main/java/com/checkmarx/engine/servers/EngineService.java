@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.manager;
+package com.checkmarx.engine.servers;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.domain.DynamicEngine;
 import com.checkmarx.engine.domain.EnginePool;
-import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.rest.CxEngineApi;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.utils.ExecutorServiceUtils;
 import com.google.common.collect.Lists;
@@ -38,10 +38,10 @@ public class EngineService implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(EngineService.class);
 
-	private final CxRestClient cxClient;
+	private final CxEngineApi cxClient;
 	private final CxConfig config;
 	private final EnginePool enginePool;
-	private final EngineProvisioner engineProvisioner;
+	private final CxEngines engineProvisioner;
 	private final ScanQueueMonitor scanQueueMonitor;
 	private final EngineManager engineManager;
 
@@ -49,7 +49,7 @@ public class EngineService implements Runnable {
 	private final ScheduledExecutorService scanQueueExecutor;
 	private final List<Future<?>> tasks = Lists.newArrayList();
 
-	public EngineService(CxRestClient cxClient, EngineProvisioner engineProvisioner, CxConfig config,
+	public EngineService(CxEngineApi cxClient, CxEngines engineProvisioner, CxConfig config,
 			ScanQueueMonitor scanQueueMonitor, EngineManager engineManager, EnginePool enginePool) {
 		this.cxClient = cxClient;
 		this.config = config;

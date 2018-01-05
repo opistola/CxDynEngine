@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.manager;
+package com.checkmarx.engine.servers;
 
 import java.util.List;
 import java.util.Map;
@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.checkmarx.engine.CxConfig;
-import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.rest.CxEngineApi;
 import com.checkmarx.engine.rest.model.ScanRequest;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -40,7 +40,7 @@ public class ScanQueueMonitor implements Runnable {
 	 */
 	private final Map<Long,ScanRequest> activeScanMap = Maps.newHashMap();
 	private final List<Long> workingScans = Lists.newArrayList();
-	private final CxRestClient cxClient;
+	private final CxEngineApi cxClient;
 	//private final CxConfig config;
 	private final int concurrentScanLimit;
 	private final AtomicInteger concurrentScans = new AtomicInteger(0);
@@ -49,7 +49,7 @@ public class ScanQueueMonitor implements Runnable {
 			BlockingQueue<ScanRequest> scanQueued, 
 			//BlockingQueue<ScanRequest> scanWorking,
 			BlockingQueue<ScanRequest> scanFinished,
-			CxRestClient cxClient,
+			CxEngineApi cxClient,
 			CxConfig config) {
 		log.info("ctor(): {}", config);
 		

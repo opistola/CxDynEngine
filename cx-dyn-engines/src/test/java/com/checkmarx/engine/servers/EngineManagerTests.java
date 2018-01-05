@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.manager;
+package com.checkmarx.engine.servers;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -27,7 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.checkmarx.engine.SpringUnitTest;
-import com.checkmarx.engine.rest.CxRestClient;
+import com.checkmarx.engine.rest.CxEngineApiClient;
+import com.checkmarx.engine.servers.EngineManager;
 
 public class EngineManagerTests extends SpringUnitTest {
 	
@@ -37,12 +38,12 @@ public class EngineManagerTests extends SpringUnitTest {
 	private EngineManager engineManager;
 
 	@Autowired
-	private CxRestClient cxClient;
+	private CxEngineApiClient cxClient;
 	
 	@Before
 	public void setUp() throws Exception {
 		
-		Assume.assumeTrue(super.runIntegrationTests());
+		Assume.assumeTrue(super.runCxIntegrationTests());
 		
 		assertThat(engineManager, notNullValue());
 		assertThat(cxClient, notNullValue());
