@@ -15,8 +15,13 @@ jar {
 }
 
 bootRun {
+    enabled = true
+    standardInput = System.in
+    
     // required for passing JVM system properties via the gradle command line
     systemProperties = System.properties
+    systemProperty "jasypt.encryptor.password", System.getProperty("jasypt.encryptor.password") ?: "CxR0cks!!"
+    systemProperty "spring.profiles.active", System.getProperty("spring.profiles.active") ?: "aws"
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {

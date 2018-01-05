@@ -13,11 +13,14 @@
  ******************************************************************************/
 package com.checkmarx.engine.app;
 
+import java.util.Scanner;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 
@@ -29,8 +32,13 @@ public class Application {
 	
 	private static final Logger log = LoggerFactory.getLogger(Application.class);
 
+	static EngineService service;
+	
 	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
+		final ConfigurableApplicationContext context = 
+				SpringApplication.run(Application.class, args);
+
+		waitForQuit(context);
 	}
 	
 	@Bean
@@ -39,11 +47,32 @@ public class Application {
 		return args -> {
 			
 			log.info("Application.run()");
-			
+			Application.service = service;
 			ScriptingUtils.logScriptingEngines();
 			
 			service.run();
+			
 		};
 	}
 	
+	private static void waitForQuit(ConfigurableApplicationContext context) {
+		if (System.in == null) {
+			log.warn("System.in is null.  Add the following to your gradle bootRun configuration:\n\t{}",
+					"standardInput = System.in");
+			return;
+		}
+
+		final Scanner scanner = new Scanner(System.in);
+		String input = "";
+		System.out.println("Enter quit to shutdown:\n");
+		while (!input.equalsIgnoreCase("quit")) {
+			input = scanner.next();
+			log.debug("Console user entered: {}", input);
+		}
+		log.info("Console user entered: {}.  Shutting down....", input);
+		service.stop();
+		context.close();
+		scanner.close();
+	}
+
 }

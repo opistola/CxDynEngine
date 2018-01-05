@@ -80,7 +80,12 @@ subprojects {
         // sets jasypt key for unit tests
         //  if you want specify a different key add -Djasypt.encryptor.password=<key> on gradle command line,
         //  e.g. ./gradlew build -Djasypt.encryptor.password=changeme
+        systemProperties = System.properties
         systemProperty "jasypt.encryptor.password", System.getProperty("jasypt.encryptor.password") ?: "CxR0cks!!"
+    }
+    
+    bootRun {
+        enabled = false
     }
 
 }
