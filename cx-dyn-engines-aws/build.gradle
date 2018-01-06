@@ -1,7 +1,7 @@
 description = 'Checkmarx CxSAST Dynamic Engine AWS Library'
 
 dependencies {
-    compile project(':cx-dyn-engines')
+    compile project(':cx-dyn-engines-core')
     compile(
         'com.amazonaws:aws-java-sdk-ec2'
     )

@@ -3,7 +3,7 @@ description = 'Checkmarx CxSAST Dynamic Engine App'
 //apply plugin: 'application'
 
 dependencies {
-    compile project(':cx-dyn-engines')
+    compile project(':cx-dyn-engines-core')
     compile project(':cx-dyn-engines-aws')
 }
 
