@@ -57,8 +57,9 @@ public class Application {
 	
 	private static void waitForQuit(ConfigurableApplicationContext context) {
 		if (System.in == null) {
-			log.warn("System.in is null.  Add the following to your gradle bootRun configuration:\n\t{}",
-					"standardInput = System.in");
+			log.warn("System.in is null.  {}{}",
+				"Add the following to your gradle bootRun configuration:\n\t",
+				"standardInput = System.in");
 			return;
 		}
 
