@@ -2,9 +2,21 @@ description = 'Checkmarx CxSAST Dynamic Engine App'
 
 //apply plugin: 'application'
 
+def activeProfile = project.ext.activeProfile
+if (activeProfile == 'aws') {
+    dependencies {
+        compile project(':cx-dyn-engines-aws')
+    }
+}
+if (activeProfile == 'vmware') {
+    dependencies {
+        //compile project(':cx-dyn-engines-vmware')
+    }
+}
+
 dependencies {
     compile project(':cx-dyn-engines-core')
-    compile project(':cx-dyn-engines-aws')
+    //compile project(':cx-dyn-engines-aws')
 }
 
 jar {
@@ -19,9 +31,9 @@ bootRun {
     standardInput = System.in
     
     // required for passing JVM system properties via the gradle command line
-    systemProperties = System.properties
+    //systemProperties = System.properties
     systemProperty "jasypt.encryptor.password", System.getProperty("jasypt.encryptor.password") ?: "CxR0cks!!"
-    systemProperty "spring.profiles.active", System.getProperty("spring.profiles.active") ?: "aws"
+    //systemProperty "spring.profiles.active", System.getProperty("spring.profiles.active") ?: "aws"
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {

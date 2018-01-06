@@ -89,3 +89,5 @@ subprojects {
     }
 
 }
+
+apply from: rootProject.file('gradle/profiles.gradle');
