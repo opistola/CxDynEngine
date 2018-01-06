@@ -38,11 +38,11 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
  * @author randy@checkmarx.com
  */
 @EnableRetry
-public class SdkApplicationConfig {
+public class CoreApplicationConfig {
 	
-	private static final Logger log = LoggerFactory.getLogger(SdkApplicationConfig.class);
+	private static final Logger log = LoggerFactory.getLogger(CoreApplicationConfig.class);
 	
-	public SdkApplicationConfig() {
+	public CoreApplicationConfig() {
 		log.info("ctor()");
 	}
 

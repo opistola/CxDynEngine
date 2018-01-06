@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import com.checkmarx.engine.spring.SdkApplicationConfig;
+import com.checkmarx.engine.spring.CoreApplicationConfig;
 
 /**
  * Spring Boot configuration
@@ -26,7 +26,7 @@ import com.checkmarx.engine.spring.SdkApplicationConfig;
  * @author randy@checkmarx.com
  */
 @Configuration
-@Import(SdkApplicationConfig.class)
+@Import(CoreApplicationConfig.class)
 public class AwsApplicationConfig {
 	
 	private static final Logger log = LoggerFactory.getLogger(AwsApplicationConfig.class);

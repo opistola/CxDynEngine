@@ -16,7 +16,7 @@ package com.checkmarx.engine;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 
-import com.checkmarx.engine.spring.SdkApplicationConfig;
+import com.checkmarx.engine.spring.CoreApplicationConfig;
 
 /**
  * Enable Spring Boot's autoconfiguration
@@ -24,8 +24,8 @@ import com.checkmarx.engine.spring.SdkApplicationConfig;
  * @author randy@checkmarx.com
  */
 @SpringBootApplication
-@Import(SdkApplicationConfig.class)
-public class SdkApplication {
+@Import(CoreApplicationConfig.class)
+public class CoreApplication {
 	
 	// placeholder
 	
