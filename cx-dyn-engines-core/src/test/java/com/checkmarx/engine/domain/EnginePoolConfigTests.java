@@ -26,10 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.checkmarx.engine.SdkSpringTest;
+import com.checkmarx.engine.CoreSpringTest;
 import com.checkmarx.engine.domain.EnginePool.EnginePoolEntry;
 
-public class EnginePoolConfigTests extends SdkSpringTest {
+public class EnginePoolConfigTests extends CoreSpringTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(EnginePoolConfigTests.class);
 

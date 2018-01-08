@@ -8,7 +8,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @ActiveProfiles({"test","noop"})
 @SpringBootTest
-public abstract class SdkSpringTest {
+public abstract class CoreSpringTest {
 
 	public static boolean runCxIntegrationTests() {
 		return false;

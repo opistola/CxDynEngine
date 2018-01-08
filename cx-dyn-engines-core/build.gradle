@@ -1,6 +1,7 @@
-description = 'Checkmarx CxSAST Dynamic Engine SDK'
+description = 'Checkmarx CxSAST Dynamic Engine Core library'
 
 dependencies {
+    // add module specific dependencies here
 }
 
 jar {
@@ -8,10 +9,4 @@ jar {
         attributes("Implementation-Title": "Checkmarx CxSAST Dynamic Engine SDK",
                    "Implementation-Version": version)
     }
-}
-
-// Prevents submodule dependencies from being included in the common jar itself.
-// Without this, each subproject that included common would include each shared dependency twice.
-bootRepackage {
-    enabled = false
 }

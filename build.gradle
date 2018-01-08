@@ -88,6 +88,11 @@ subprojects {
         enabled = false
     }
 
+    // Prevents submodule dependencies from being included in the jar itself.
+    // Enable in app specific project build.gradle
+    bootRepackage {
+        enabled = false
+    }
 }
 
 apply from: rootProject.file('gradle/profiles.gradle');

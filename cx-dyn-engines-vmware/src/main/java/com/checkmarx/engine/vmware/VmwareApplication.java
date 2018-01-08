@@ -11,7 +11,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.checkmarx.engine.aws;
+package com.checkmarx.engine.vmware;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -21,7 +21,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author randy@checkmarx.com
  */
 @SpringBootApplication(scanBasePackages="com.checkmarx.engine")
-public class AwsApplication {
+public class VmwareApplication {
 	
 	// placeholder
 	

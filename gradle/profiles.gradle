@@ -28,25 +28,17 @@ subprojects {
         apply from: rootProject.file('gradle/profile-aws.gradle');
         
     } else if (project.hasProperty('vmware')) {
-        // Used for Vmware engine hosting
+        // Used for vmware engine hosting
         activeProfile = vmwareProfile
         apply from: rootProject.file('gradle/profile-vmware.gradle');
     
     } else {
         // Default to aws when no profile property is specified
-        activeProfile = awsProfile
-        apply from: rootProject.file('gradle/profile-aws.gradle');
+        activeProfile = 'aws'
+        //apply from: rootProject.file('gradle/profile-aws.gradle');
     }
     println 'Using profile: "' + activeProfile + '" for ' + project.getName()
-    
-    // bootRun will rely on the -P profile argument, 
-    // defaulting to the "aws" profile if no -P arguments are provided
-    bootRun {
-        systemProperties = System.properties
-        systemProperties.put('spring.profiles.active', activeProfile)
-    }
-    
-    project.ext.set('activeProfile', activeProfile)
+    ext.activeProfile = activeProfile
     
     // Alternative to using the extended bootRun task above to set properties.
     // Comment out the bootRun task extension above (lines 45 to 63) and un-comment this task (lines 72 to 78) to try it.
