@@ -31,10 +31,10 @@ Fixed
 
 
 RANDY
-[ ] Pull out EnginePool config
-[ ] Add external spring config for multiple EngineProvisioners
-[ ] Modularlize EngineProvisioners
-[ ] Scaffold VmwareProvisioner (separate module)
+[X] Pull out EnginePool config
+[X] Add external spring config for multiple EngineProvisioners
+[X] Modularlize EngineProvisioners
+[X] Scaffold VmwareProvisioner (separate module)
 
 SERGIO
 [ ] Define and implement VmwareConfig
