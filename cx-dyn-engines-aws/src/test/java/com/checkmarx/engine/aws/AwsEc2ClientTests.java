@@ -18,6 +18,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,18 @@ public class AwsEc2ClientTests extends AwsSpringTest {
 		ec2Client.terminate(instanceId);
 	}
 
+	@Test(expected = RuntimeException.class)
+	public void testDescribe_Retry() {
+		log.trace("testDescribe_Retry()");
+
+		// instance doesn't exist
+		final String instanceId = "i-05bb6ec6c7aba753c";
+		
+		final Instance instance = ec2Client.describe(instanceId);
+		log.debug("{}", instance);
+		fail("RuntimeException expected");
+	}
+	
 	@Test
 	@Ignore
 	public void testDescribe() {

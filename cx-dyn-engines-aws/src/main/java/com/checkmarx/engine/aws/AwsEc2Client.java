@@ -22,6 +22,8 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.AmazonClientException;
@@ -65,6 +67,9 @@ public class AwsEc2Client implements AwsComputeClient {
 	
 	private final AmazonEC2 client;
 	private final AwsEngineConfig config;
+	
+	private static final long RETRY_DELAY = 500; // ms
+	private static final int RETRY_ATTEMPTS = 2;
 
 	public AwsEc2Client(AwsEngineConfig config) {
 		this.client = AmazonEC2ClientBuilder.defaultClient();
@@ -79,6 +84,10 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
+	@Retryable(
+			value = { RuntimeException.class },
+			maxAttempts = RETRY_ATTEMPTS,
+			backoff = @Backoff(delay = RETRY_DELAY))
 	public Instance launch(String name, String instanceType, Map<String,String> tags) {
 		log.trace("launch(): name={}; instanceType={}", name, instanceType);
 		
@@ -104,7 +113,9 @@ public class AwsEc2Client implements AwsComputeClient {
 		} catch (Throwable t) {
 			log.warn("Failed to launch EC2 instance; name={}; cause={}; message={}", name, t, t.getMessage());
 			if (instance != null) {
-				safeTerminate(instance.getInstanceId());
+				final String instanceId = instance.getInstanceId();
+				log.warn("Terminating failed instance launch; instanceId={}", instanceId);
+				safeTerminate(instanceId);
 			}
 			throw new RuntimeException("Failed to launch EC2 instance", t);
 		} finally {
@@ -150,6 +161,10 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
+	@Retryable(
+			value = { RuntimeException.class },
+			maxAttempts = RETRY_ATTEMPTS,
+			backoff = @Backoff(delay = RETRY_DELAY))
 	public Instance start(String instanceId) {
 		log.trace("start(): instanceId={}", instanceId);
 		
@@ -175,6 +190,10 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
+	@Retryable(
+			value = { RuntimeException.class },
+			maxAttempts = RETRY_ATTEMPTS,
+			backoff = @Backoff(delay = RETRY_DELAY))
 	public void stop(String instanceId) {
 		log.trace("stop(): instanceId={}", instanceId);
 		
@@ -196,6 +215,10 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
+	@Retryable(
+			value = { RuntimeException.class },
+			maxAttempts = RETRY_ATTEMPTS,
+			backoff = @Backoff(delay = RETRY_DELAY))
 	public void terminate(String instanceId) {
 		log.trace("terminate(): instanceId={}", instanceId);
 		
@@ -228,6 +251,10 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 	
 	@Override
+	@Retryable(
+			value = { RuntimeException.class },
+			maxAttempts = RETRY_ATTEMPTS,
+			backoff = @Backoff(delay = RETRY_DELAY))
 	public List<Instance> find(String tag, String... values) {
 		log.trace("list(): tag={}; values={}", tag, values);
 		
@@ -258,6 +285,10 @@ public class AwsEc2Client implements AwsComputeClient {
 	}
 
 	@Override
+	@Retryable(
+			value = { RuntimeException.class },
+			maxAttempts = RETRY_ATTEMPTS,
+			backoff = @Backoff(delay = RETRY_DELAY))
 	public Instance describe(String instanceId) {
 		log.trace("describe(): instanceId={}", instanceId);
 		
@@ -303,6 +334,7 @@ public class AwsEc2Client implements AwsComputeClient {
 				new TimeoutTask<>("waitForState", config.getLaunchTimeoutSec(), TimeUnit.SECONDS);
 		try {
 			return task.execute(() -> {
+				TimeUnit.MILLISECONDS.sleep(sleepMs);
 				Instance instance = describe(instanceId);
 				if (instance == null) return null;
 				
@@ -379,6 +411,8 @@ public class AwsEc2Client implements AwsComputeClient {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("config", config)
+				.add("retryAttempts", RETRY_ATTEMPTS)
+				.add("retryDelay", RETRY_DELAY)
 				.toString();
 	}
 
