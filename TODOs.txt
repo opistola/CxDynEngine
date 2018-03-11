@@ -9,6 +9,7 @@ Features
 [X] Add property (password) encryption
 [X] Add engine launch/terminate scripting hooks (JSR-223)
 [X] Factor EnginePool out of AwsEngineConfig
+[X] Add SSL support, support self-signed certs
 [ ] Test NumberOfPromotableScans = 0 (Engine config)
 [ ] Move cx credentials out of CxConfig
 [ ] Add command for creating encrypted values
@@ -26,7 +27,7 @@ Features
 [ ] **Add scriptable EnginePool match criteria
 
 Fixed
-[ ] AWS Describe instance failure causes scan lost - add retry 
+[X] AWS Describe instance failure causes scan lost - add retry 
 [ ] Handle Cx session timeout
 [X] ScanRequest dates may fail unmarshalling if they don't contain 3 millisec digits
 
@@ -40,3 +41,10 @@ RANDY
 SERGIO
 [ ] Define and implement VmwareConfig
 [ ] Implement VmwareProvisioner
+
+MOVE SALES
+[ ] Check on IAM Role based AWS authentication
+[ ] Support static engines
+[ ] Support minimum running engines
+[ ] Restarting DynEngine with engine actively scanning
+     - Check how expiration is handled for existing eng

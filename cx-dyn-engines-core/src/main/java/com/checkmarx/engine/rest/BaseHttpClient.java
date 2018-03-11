@@ -17,6 +17,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
@@ -55,18 +58,26 @@ public abstract class BaseHttpClient {
 	 */
 	protected ClientHttpRequestFactory getClientHttpRequestFactory() {
 		
-		final CloseableHttpClient httpClient = HttpClients.custom()
-	        .setSSLHostnameVerifier(new NoopHostnameVerifier())
-	        .setUserAgent(config.getUserAgent() + " : v" + config.getVersion())
-	        .disableCookieManagement()
-	        .useSystemProperties()
-	        .build();
+		try {
+			final TrustStrategy trustStrategy = TrustSelfSignedStrategy.INSTANCE;
+			final SSLContextBuilder sslContextBuilder = SSLContextBuilder.create().loadTrustMaterial(trustStrategy);
+			final CloseableHttpClient httpClient = HttpClients.custom()
+					.setSSLContext(sslContextBuilder.build())
+				    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+				    .setUserAgent(config.getUserAgent() + " : v" + config.getVersion())
+				    .disableCookieManagement()
+				    .useSystemProperties()
+				    .build();
+		    final HttpComponentsClientHttpRequestFactory clientHttpRequestFactory
+		    	= new HttpComponentsClientHttpRequestFactory(httpClient);
+		    clientHttpRequestFactory.setConnectTimeout(timeoutMillis);
+		    clientHttpRequestFactory.setReadTimeout(timeoutMillis);
+		    return clientHttpRequestFactory;
+		} catch (Throwable t) {
+			final String msg = "Unable to initialize ClientHttpRequestFactory";
+			throw new RuntimeException(msg, t);
+		}
 		
-	    final HttpComponentsClientHttpRequestFactory clientHttpRequestFactory
-	    	= new HttpComponentsClientHttpRequestFactory(httpClient);
-	    clientHttpRequestFactory.setConnectTimeout(timeoutMillis);
-	    clientHttpRequestFactory.setReadTimeout(timeoutMillis);
-	    return clientHttpRequestFactory;
 	}
 
 	protected interface Request<R> {
