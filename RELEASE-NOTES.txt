@@ -1,6 +1,16 @@
 USAGE:
     java -Djasypt.encryptor.password=<key> -jar cx-dyn-engines-0.6.0-SNAPSHOT.jar
     
+v0.7.0
+    - Add SecureString & KeystoreSecretProvider for password management (not used yet)
+    - Convert to multi-module project to support multiple EngineProvisioners
+    - Add EnginePoolConfig
+    - Add multiple EngineProvisioners
+    - Scaffold out VmwareProvisioner
+    - Add graceful console shutdown command
+    - Add retry to AWS EC2 calls
+    - Add SSL support for Cx API calls
+    - Fix: handle Cx auth session timeout
 
 v0.6.0
     - Implemented console app which can be run as a background service
