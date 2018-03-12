@@ -86,8 +86,7 @@ public class CxCookieAuthInterceptor implements ClientHttpRequestInterceptor {
 			}
 		}
 		
-		final ClientHttpResponse response =  execution.execute(request, body);
-	
+		final ClientHttpResponse response = execution.execute(request, body);
 		return checkCookies(response);
 	}
 	

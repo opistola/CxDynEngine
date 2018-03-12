@@ -59,6 +59,27 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 				.additionalInterceptors(new CxCookieAuthInterceptor());
 	}
 	
+	protected <T,R> R execute(String operation, Request<R> request, boolean retryOn401) {
+		int attempt = 0;
+		R result = null;
+		while (attempt < 2) {
+			attempt++;
+			try {
+				result = super.execute(operation, request);
+				return result;
+			} catch (HttpClientErrorException e) {
+				if (retryOn401 && e.getRawStatusCode() == 401) {
+					log.info("...unauthorized, logging in and retrying...");
+					login();
+				} else {
+					throw e;
+				}
+			}
+		}
+		// shouldn't reach this code
+		throw new IllegalStateException("Cx rest call failed, too many API call attempts");
+	}
+	
 	@Override
 	public boolean login() {
 		return login(new Login(config.getUserName(), config.getPassword()));
@@ -93,7 +114,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		final String url = buildEngineUrl();
 		final EngineServer[] engines = execute("getEngines", () -> {
 			return sastClient.getForObject(url, EngineServer[].class);
-		});
+		}, true);
 		return Lists.newArrayList(engines);
 	}
 	
@@ -104,7 +125,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		final String url = buildEngineUrl(id);
 		final EngineServer engine = execute("getEngine", () -> {
 			return sastClient.getForObject(url, EngineServer.class);
-		});
+		}, true);
 		return engine;
 	}
 	
@@ -115,7 +136,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		final String url = buildEngineUrl();
 		final EngineServerResponse response = execute("registerEngine", () -> {
 			return sastClient.postForObject(url, engine, EngineServerResponse.class);
-		});
+		}, true);
 		return getEngine(response.getId());
 	}
 	
@@ -127,7 +148,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		execute("unregisterEngine", () -> {
 			sastClient.delete(url);
 			return true;
-		});
+		}, true);
 	}
 	
 	@Override
@@ -139,7 +160,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		execute("updateEngine", () -> {
 			sastClient.put(url, engine);
 			return true;
-		});
+		}, true);
 		return getEngine(id);
 	}
 	
@@ -176,7 +197,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		final String url = buildUrl(SCAN_REQUESTS_URL);
 		final ScanRequest[] scanRequests = execute("getScansQueue", () -> {
 			return sastClient.getForObject(url, ScanRequest[].class);
-		});
+		}, true);
 		return Arrays.asList(scanRequests);
 	}
 	

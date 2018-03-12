@@ -27,6 +27,7 @@ import org.assertj.core.util.Lists;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +96,6 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		assertThat(engine.getName().toUpperCase(), is("Localhost".toUpperCase()));
 		//assertThat(engine.isAlive(), is(true));
 		//assertThat(engine.isBlocked(), is(false));
-		
 	}
 	
 	@Test
@@ -105,6 +105,21 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		final EngineServer engine = cxClient.getEngine(engineId);
 		assertThat(engine, is(notNullValue()));
 		assertThat(engine.getId(), is(equalTo(engineId)));
+	}
+	
+	@Test
+	@Ignore
+	// RJG: requires Cx session timeout set to 1 minute
+	public void testSessionTimeout() throws InterruptedException {
+		log.trace("testSessionTimeout()");
+		
+		testGetEngine();
+
+		long sleep = 120 * 1000;
+		log.info("Sleeping for {} ms", sleep);
+		Thread.sleep(sleep);
+
+		testGetEngine();
 	}
 	
 	@Test(expected=HttpClientErrorException.class)

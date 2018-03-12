@@ -27,8 +27,8 @@ Features
 [ ] **Add scriptable EnginePool match criteria
 
 Fixed
+[X] Handle Cx session timeout
 [X] AWS Describe instance failure causes scan lost - add retry 
-[ ] Handle Cx session timeout
 [X] ScanRequest dates may fail unmarshalling if they don't contain 3 millisec digits
 
 
