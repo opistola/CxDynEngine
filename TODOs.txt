@@ -30,6 +30,10 @@ Fixed
 [X] Handle Cx session timeout
 [X] AWS Describe instance failure causes scan lost - add retry 
 [X] ScanRequest dates may fail unmarshalling if they don't contain 3 millisec digits
+[ ] Nullpointer during blocking
+[ ] Disk encryption caused launch failure
+[ ] cxManagerURL is logged incorrectly
+[ ] Launching multiple scans on startup, exceeds limits
 
 
 RANDY
@@ -48,3 +52,8 @@ MOVE SALES
 [ ] Support minimum running engines
 [ ] Restarting DynEngine with engine actively scanning
      - Check how expiration is handled for existing eng
+     
+CxMS
+[ ] Test start/stop times for large instances
+[ ] Allow start/stop not terminate on pool basis (m5 - 50s)
+[ ] Check logic when launching engine times out - should terminate old, launch new engine
