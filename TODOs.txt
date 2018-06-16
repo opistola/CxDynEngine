@@ -10,6 +10,7 @@ Features
 [X] Add engine launch/terminate scripting hooks (JSR-223)
 [X] Factor EnginePool out of AwsEngineConfig
 [X] Add SSL support, support self-signed certs
+[ ] Support CxSAST v8.6
 [ ] Test NumberOfPromotableScans = 0 (Engine config)
 [ ] Move cx credentials out of CxConfig
 [ ] Add command for creating encrypted values

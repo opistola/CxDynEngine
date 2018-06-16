@@ -106,7 +106,7 @@ public class ScriptingTests {
 		return new ScanRequest(1,"runid", "teamid", 
 				new Project(1, "project"), 
 				ScanStatus.to(ScanStatus.Queued),
-				null, loc, false, true, "origin", languages, DateTime.now(), DateTime.now(), null);
+				loc, false, true, "origin", languages, DateTime.now(), DateTime.now(), null);
 	}
 	
 }

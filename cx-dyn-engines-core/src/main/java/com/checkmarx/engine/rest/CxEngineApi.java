@@ -32,8 +32,10 @@ public interface CxEngineApi {
 
 	boolean login(Login login);
 
+	String getCxVersion();
+	
 	List<EngineServer> getEngines();
-
+	
 	EngineServer getEngine(long id);
 
 	EngineServer registerEngine(EngineServer engine);

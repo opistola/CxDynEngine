@@ -15,6 +15,7 @@ package com.checkmarx.engine.rest;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -38,6 +39,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import com.checkmarx.engine.CoreSpringTest;
 import com.checkmarx.engine.rest.model.EngineServer;
+import com.checkmarx.engine.rest.model.EngineServerV86;
+import com.checkmarx.engine.rest.model.EngineServerV86.EngineState;
 import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 
@@ -80,6 +83,16 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 	}
 	
 	@Test
+	public void testCxVersion() {
+		log.trace("testCxVersion()");
+
+		log.debug("{}", cxClient);
+		final String version = cxClient.getCxVersion();
+		assertThat(version, is(not(equalTo("Unknown"))));
+		
+	}
+	
+	@Test
 	public void testGetEngineServers() {
 		log.trace("testGetEngineServers()");
 		
@@ -105,6 +118,8 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		final EngineServer engine = cxClient.getEngine(engineId);
 		assertThat(engine, is(notNullValue()));
 		assertThat(engine.getId(), is(equalTo(engineId)));
+		
+		log.debug("{}", engine);
 	}
 	
 	@Test
@@ -147,8 +162,13 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		assertThat(engine2.getMaxLoc(), is(equalTo(engine1.getMaxLoc())));
 		assertThat(engine2.getMaxScans(), is(equalTo(engine1.getMaxScans())));
 		assertThat(engine2.getUri(), is(equalTo(engine1.getUri())));
-		assertThat(engine2.isBlocked(), is(equalTo(engine1.isBlocked())));
+		//assertThat(engine2.isBlocked(), is(equalTo(engine1.isBlocked())));
 		assertThat(engine2.isAlive(), is(equalTo(false)));
+		if (CxVersion.isMinVersion86(cxClient.getCxVersion())) {
+			EngineServerV86 engineV86 = (EngineServerV86)engine2;
+			assertThat(engineV86.getStatus(), is(notNullValue()));
+			assertThat(engineV86.getState(), is(equalTo(EngineState.Offline)));
+		}
 	}
 	
 	@Test
@@ -179,7 +199,7 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		final List<ScanRequest> scans = cxClient.getScansQueue();
 		assertThat(scans, is(notNullValue()));
 		for (ScanRequest scan : scans) {
-			log.debug("{}", scan);
+			log.debug("{}", scan.toString(true));
 		}
 	}
 	

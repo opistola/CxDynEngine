@@ -76,7 +76,7 @@ public class ScanRequest {
 	private Stage stage;
 	private String teamId;
 	private Project project;
-	private Long engineId;
+	private Engine engine;
 	private Integer loc;
 	private ProgramLanguage[] languages;
 	//@JsonFormat(shape=JsonFormat.Shape.STRING, pattern=DATE_PATTERN, timezone=TZ)
@@ -95,7 +95,7 @@ public class ScanRequest {
 		// default .ctor
 	}
 
-	public ScanRequest(long id, String runId, String teamId, Project project, Stage stage, Long engineId, 
+	public ScanRequest(long id, String runId, String teamId, Project project, Stage stage, 
 			Integer loc, boolean incremental, boolean isPublic, String origin,
 			ProgramLanguage[] languages, DateTime dateCreated, DateTime queuedOn, DateTime engineStartedOn
 			) {
@@ -104,7 +104,6 @@ public class ScanRequest {
 		this.stage = stage;
 		this.teamId = teamId;
 		this.project = project;
-		this.engineId = engineId;
 		this.loc = loc;
 		this.languages = languages;
 		this.dateCreated = dateCreated;
@@ -144,7 +143,11 @@ public class ScanRequest {
 	}
 
 	public Long getEngineId() {
-		return engineId;
+		return engine == null ? null : engine.getId();
+	}
+	
+	public Engine getEngine() {
+		return engine;
 	}
 
 	public Integer getLoc() {
@@ -198,33 +201,32 @@ public class ScanRequest {
 		getLanguages().forEach(lang -> sb.append(lang.toString() + ", "));
 		return sb.toString();
 	}
-
-	@Override
-	public String toString() {
+	
+	protected MoreObjects.ToStringHelper toStringHelper() {
 		return MoreObjects.toStringHelper(this)
 				.add("id", id)
 				.add("runId", runId)
 				.add("status", getStatus())
-				.add("project", project.getId())
-				.add("engineId", engineId)
+				.add("projectId", project.getId())
+				.add("engineId", getEngineId())
 				.add("loc", loc)
 				.add("dateCreated", dateCreated)	
-				.omitNullValues()
+				.omitNullValues();
+	}
+
+	@Override
+	public String toString() {
+		return toStringHelper()
 				.toString();
 	}
 	
 	public String toString(boolean includeAll) {
 		if (!includeAll) return toString();
 
-		return MoreObjects.toStringHelper(this)
-				.add("id", id)
-				.add("runId", runId)
-				.add("status", getStatus())
+		return toStringHelper()
+				.add("project", project)
 				.add("stage", stage)
 				.add("teamId", teamId)
-				.add("project", project)
-				.add("engineId", engineId)
-				.add("loc", loc)
 				.add("languages", printLanguages())
 				.add("dateCreated", dateCreated)	
 				.add("queuedOn", queuedOn)

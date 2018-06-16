@@ -11,7 +11,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 public abstract class CoreSpringTest {
 
 	public static boolean runCxIntegrationTests() {
-		return false;
+		return true;
 	}
 
 }

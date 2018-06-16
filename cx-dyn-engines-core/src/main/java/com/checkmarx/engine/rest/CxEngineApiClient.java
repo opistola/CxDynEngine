@@ -28,6 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import com.checkmarx.engine.CxConfig;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.rest.model.EngineServerResponse;
+import com.checkmarx.engine.rest.model.EngineServerV86;
 import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 import com.checkmarx.engine.rest.model.ErrorResponse;
@@ -45,6 +46,8 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 	private static final String SCAN_REQUESTS_URL = BASE_URL + "/sast/scansQueue";
 	
 	private final RestTemplate sastClient;
+	private boolean isLoggedIn;
+	private String cxVersion = "Unknown";
 
 	public CxEngineApiClient(RestTemplateBuilder restTemplateBuilder, CxConfig config) {
 		super(config);
@@ -104,7 +107,26 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 				throw e;
 			}
 		});
+		if (success) {
+			isLoggedIn = true;
+			getCxVersion();
+		}
 		return success;
+	}
+	
+	@Override
+	public String getCxVersion() {
+		if (!isLoggedIn) return "Unknown";
+		
+		if (!cxVersion.equals("Unknown"))
+			return cxVersion;
+		
+		List<EngineServer> engines = getEngines();
+		if (engines.size() == 0) {
+			throw new RuntimeException("ERROR: unable to determine version, no engine servers registered.");
+		}
+		cxVersion = engines.get(0).getCxVersion();
+		return cxVersion;
 	}
 	
 	@Override
@@ -113,7 +135,10 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		
 		final String url = buildEngineUrl();
 		final EngineServer[] engines = execute("getEngines", () -> {
-			return sastClient.getForObject(url, EngineServer[].class);
+			if (CxVersion.isMinVersion86(cxVersion))
+				return sastClient.getForObject(url, EngineServerV86[].class);
+			else
+				return sastClient.getForObject(url, EngineServer[].class);
 		}, true);
 		return Lists.newArrayList(engines);
 	}
@@ -124,7 +149,10 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		
 		final String url = buildEngineUrl(id);
 		final EngineServer engine = execute("getEngine", () -> {
-			return sastClient.getForObject(url, EngineServer.class);
+			if (CxVersion.isMinVersion86(cxVersion))
+				return sastClient.getForObject(url, EngineServerV86.class);
+			else
+				return sastClient.getForObject(url, EngineServer.class);
 		}, true);
 		return engine;
 	}
@@ -217,6 +245,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("config", config)
+				.add("cxVersion", getCxVersion())
 				.toString();
 	}
 
