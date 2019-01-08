@@ -15,6 +15,7 @@ package com.checkmarx.engine.spring;
 
 import java.util.List;
 
+import org.apache.catalina.Engine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -87,10 +88,11 @@ public class CoreApplicationConfig {
 	@Bean
 	public ScanQueueMonitor queueMonitor(
 			CxConfig config,
-			CxEngineApi cxClient, 
+			CxEngineApi cxClient,
+			EnginePool enginePool,
 			ScanQueue scansQueued, 
 			ScanQueue scansFinished) {
-		return new ScanQueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), cxClient, config);
+		return new ScanQueueMonitor(scansQueued.getQueue(), scansFinished.getQueue(), enginePool, cxClient, config);
 	}
 	
 }
