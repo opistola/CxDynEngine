@@ -21,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
 
+import jdk.nashorn.internal.parser.JSONParser;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,8 @@ import com.checkmarx.engine.rest.CxEngineApi;
 import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.utils.ExecutorServiceUtils;
 import com.google.common.collect.Lists;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 
 @Component
 public class EngineService implements Runnable {
@@ -101,9 +105,9 @@ public class EngineService implements Runnable {
 	public void registerQueuingEngine() {
 		log.debug("registerQueueEngine()");
 		
-		final long engineId = config.getQueueingEngineId();
-		final EngineServer engine = cxClient.blockEngine(engineId);
-		
+		final String engineName = config.getQueueingEngineName();
+		final EngineServer engine = cxClient.blockEngine(engineName);
+
 		log.info("Queueing engine registered: {}", engine);
 	}
 	
@@ -116,7 +120,7 @@ public class EngineService implements Runnable {
 			final List<EngineServer> engines = cxClient.getEngines();
 			engines.forEach((engine) -> {
 				boolean isDynamic = isDynamicEngine(engine);
-				log.info("CxEngine found; engine={}; isAlive={}; isBlocked={}; isDynamic={}", 
+				log.info("CxEngine found; engine={}; isAlive={}; isBlocked={}; isDynamic={}",
 						engine.getName(), engine.isAlive(), engine.isBlocked(), isDynamic);
 				if (isDynamic) {
 					//FIXME: once the engine API supports engine state, add active engines to registered engine list
@@ -125,6 +129,9 @@ public class EngineService implements Runnable {
 					cxClient.unregisterEngine(engine.getId());
 				}
 			});
+		} catch (HttpClientErrorException e){
+			log.error("Error while checking CxEngines; cause={}; message={}", e, e.getMessage(), e);
+			//(HttpStatusCodeException) e).getResponseBodyAsString()) -> messageDetails contains "busy (scanning)"  TODO rogue engine monitor??
 		} catch (Exception e) {
 			// log and swallow
 			log.error("Error while checking CxEngines; cause={}; message={}", e, e.getMessage(), e); 

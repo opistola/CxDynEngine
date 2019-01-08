@@ -16,6 +16,7 @@ package com.checkmarx.engine.rest;
 import java.util.Arrays;
 import java.util.List;
 
+import com.checkmarx.engine.domain.DynamicEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -128,7 +129,20 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		}, true);
 		return engine;
 	}
-	
+
+	@Override
+	public EngineServer getEngine(final String name) {
+		log.trace("getEngine(): name={}", name);
+
+		List<EngineServer> engines =  getEngines();
+		for(EngineServer e: engines){
+			if(e.getName().equalsIgnoreCase(name)){
+				return e;
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public EngineServer registerEngine(final EngineServer engine) {
 		log.trace("registerEngine() : {}", engine);
@@ -177,6 +191,18 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		return updateEngine(engine);
 	}
 
+	@Override
+	public EngineServer blockEngine(String engineName) {
+		log.trace("blockEngine(): engineName={}", engineName);
+
+		final EngineServer engine = getEngine(engineName);
+		if (engine == null) return null;
+
+		if (engine.isBlocked()) return engine;
+
+		engine.setBlocked(true);
+		return updateEngine(engine);
+	}
 	@Override
 	public EngineServer unblockEngine(long engineId) {
 		log.trace("unblockEngine(): engineId={}", engineId);

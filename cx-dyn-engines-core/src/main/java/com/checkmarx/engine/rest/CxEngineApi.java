@@ -36,6 +36,8 @@ public interface CxEngineApi {
 
 	EngineServer getEngine(long id);
 
+	EngineServer getEngine(String name);
+
 	EngineServer registerEngine(EngineServer engine);
 
 	void unregisterEngine(long id);
@@ -43,6 +45,8 @@ public interface CxEngineApi {
 	EngineServer updateEngine(EngineServer engine);
 
 	EngineServer blockEngine(long engineId);
+
+	EngineServer blockEngine(String engineName);
 
 	EngineServer unblockEngine(long engineId);
 

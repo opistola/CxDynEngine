@@ -33,7 +33,7 @@ public class CxConfig {
 	private int idleMonitorSecs = 15;
 	private int queueCapacity = 100;
 	private int queueIntervalSecs = 20;
-	private long queueingEngineId=1L;
+	private String queueingEngineName="DynamicEngine";
 	private String restUrl;
 	private int timeoutSecs = 20;
 	private String userAgent = "CxDynamicEngineManager";
@@ -115,12 +115,12 @@ public class CxConfig {
 		this.queueIntervalSecs = queueIntervalSecs;
 	}
 
-	public long getQueueingEngineId() {
-		return queueingEngineId;
+	public String getQueueingEngineName() {
+		return queueingEngineName;
 	}
 
-	public void setQueueingEngineId(long queueingEngineId) {
-		this.queueingEngineId = queueingEngineId;
+	public void setQueueingEngineName(String queueingEngineName) {
+		this.queueingEngineName = queueingEngineName;
 	}
 
 	public String getRestUrl() {
@@ -172,7 +172,7 @@ public class CxConfig {
 				.add("idleMonitorSecs", idleMonitorSecs)
 				.add("queueCapacity", queueCapacity)
 				.add("queueIntervalSecs", queueIntervalSecs)
-				.add("queueingEngineId", queueingEngineId)
+				.add("queueingEngineName", queueingEngineName)
 				.add("restUrl", restUrl)
 				.add("timeoutSecs", timeoutSecs)
 				.add("userAgent", userAgent)
