@@ -73,7 +73,7 @@ public class AwsEc2ClientTests extends AwsSpringTest {
 		final String name = "cx-test1";
 		final String instanceType = "t2.small";
 		//final String instanceType = "m4.large";
-		final String version = "8.5.0-RC3";
+		final String version = "8.8.0-HF1";
 		final CxServerRole role = CxServerRole.ENGINE;
 		
 		final Map<String, String> tags = AwsEngines.createCxTags(role, version);
@@ -119,11 +119,11 @@ public class AwsEc2ClientTests extends AwsSpringTest {
 		log.trace("testDescribe()");
 
 		// engine image instance for RJG
-		final String instanceId = "i-0e34e0f752b8ac04f";
+		final String instanceId = "i-0882bd5b694fc761a";
 		
 		final Instance instance = ec2Client.describe(instanceId);
 		assertThat(instance, notNullValue());
-		//log.debug("{}", AwsUtils.printInstanceDetails(instance, "CxVersion", "CxRole"));
+		log.debug("{}", Ec2.print(instance));
 		assertThat(instance.getInstanceId(), is(instanceId));
 		assertThat(Ec2.getName(instance), is(notNullValue()));
 	}

@@ -163,7 +163,7 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 		
 		final String url = buildEngineUrl();
 		final EngineServerResponse response = execute("registerEngine", () -> {
-			return sastClient.postForObject(url, engine, EngineServerResponse.class);
+			return sastClient.postForObject(url, engine.toDTO(), EngineServerResponse.class);
 		}, true);
 		return getEngine(response.getId());
 	}
@@ -183,10 +183,11 @@ public class CxEngineApiClient extends BaseHttpClient implements CxEngineApi {
 	public EngineServer updateEngine(EngineServer engine) {
 		log.trace("updateEngine(): {}", engine);
 		
+		
 		final long id = engine.getId();
 		final String url = buildEngineUrl(id);
 		execute("updateEngine", () -> {
-			sastClient.put(url, engine);
+			sastClient.put(url, engine.toDTO());
 			return true;
 		}, true);
 		return getEngine(id);

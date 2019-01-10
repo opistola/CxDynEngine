@@ -10,12 +10,14 @@ Features
 [X] Add engine launch/terminate scripting hooks (JSR-223)
 [X] Factor EnginePool out of AwsEngineConfig
 [X] Add SSL support, support self-signed certs
-[ ] Support CxSAST v8.6
-[ ] Test NumberOfPromotableScans = 0 (Engine config)
+[X] Support CxSAST v8.6
+[ ] Support token auth
+[ ] Pool level termination option - stop set at pool level
+[ ] Add minimum provisioned engines
+[X] Test NumberOfPromotableScans = 0 (Engine config)
 [ ] Move cx credentials out of CxConfig
 [ ] Add command for creating encrypted values
 [ ] Add AWS credentials
-[ ] Add minimum provisioned engines
 [ ] Clean up unit tests (remove environment dependencies)
 [ ] Add concurrent scans per engine
 [ ] Add scanid tag to aws engine server
@@ -31,10 +33,11 @@ Fixed
 [X] Handle Cx session timeout
 [X] AWS Describe instance failure causes scan lost - add retry 
 [X] ScanRequest dates may fail unmarshalling if they don't contain 3 millisec digits
-[ ] Nullpointer during blocking
-[ ] Disk encryption caused launch failure
+[ ] Nullpointer during blocking - think due to v8.6 EngineState change
+[ ] Disk encryption caused launch failure - what does AWS return?
 [ ] cxManagerURL is logged incorrectly
 [ ] Launching multiple scans on startup, exceeds limits
+[ ] Nullpointer when cancel scan from CxPortal
 
 
 RANDY

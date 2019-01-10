@@ -214,6 +214,7 @@ public class AwsEngines implements CxEngines {
 			if (waitForSpinup) {
 				pingEngine(host);
 			}
+			//move this logic into caller
 			runScript(awsConfig.getScriptOnLaunch(), engine);
 			
 			//engine.setState(State.IDLE);

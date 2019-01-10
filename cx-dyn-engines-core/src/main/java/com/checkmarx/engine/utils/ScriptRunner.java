@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 import javax.script.ScriptEngine;
@@ -125,7 +126,7 @@ public class ScriptRunner<T> implements Runnable {
 				log.warn("Cannot run engine script, script not found: {}", scriptFile);
 				return null;
 			}
-			return IOUtils.toString(inputStream);
+			return IOUtils.toString(inputStream, Charset.defaultCharset());
 		} catch (IOException e) {
 			log.warn("Error opening script file: {}", e.getMessage(), e);
 			return null;

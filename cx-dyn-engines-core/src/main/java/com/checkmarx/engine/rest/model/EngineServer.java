@@ -94,6 +94,10 @@ public class EngineServer {
 	public String getCxVersion() {
 		return cxVersion;
 	}
+	
+	public EngineServerDTO toDTO() {
+		return new EngineServerDTO(name, uri, minLoc, maxLoc, blocked);
+	}
 
 	protected MoreObjects.ToStringHelper toStringHelper() {
 		return MoreObjects.toStringHelper(this)

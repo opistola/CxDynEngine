@@ -193,6 +193,22 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 	}
 	
 	@Test
+	public void testBlockEngine() {
+		log.trace("testBlockEngine()");
+		
+		final EngineServerV86 engine = (EngineServerV86) cxClient.getEngine(engineId);
+		log.debug("before={}", engine);
+		if (engine.isBlocked()) {
+			final EngineServer engine2 = cxClient.unblockEngine(engineId);
+			assertThat(engine2.isBlocked(), is(false));
+		} else {
+			final EngineServer engine3 = cxClient.blockEngine(engineId);
+			assertThat(engine3.isBlocked(), is(true));
+		}
+		log.debug("after={}", cxClient.unblockEngine(engineId));
+	}
+	
+	@Test
 	public void testGetScansQueue() {
 		log.trace("testGetScansQueue()");
 
