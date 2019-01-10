@@ -4,7 +4,7 @@ Service for dynamically provisioning Checkmarx engine servers based on the scan 
 
 ### Overview
 
-This service is written in Java, using [Spring Boot](https://projects.spring.io/spring-boot/ "Rocks!").  It uses for [Gradle](https://gradle.org/ "Is Cool!") for build and dependency management.
+This service is written in Java, using [Spring Boot](https://projects.spring.io/spring-boot/ "Rocks!").  It uses [Gradle](https://gradle.org/ "Is Cool!") for build and dependency management.
 
 ### Build
 
