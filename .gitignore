@@ -2,7 +2,6 @@
 *.zip
 *.pptx
 archive/
-test/
 Errors/
 
 # common ignores
