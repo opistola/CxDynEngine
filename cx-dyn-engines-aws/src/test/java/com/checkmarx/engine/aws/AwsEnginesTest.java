@@ -50,6 +50,8 @@ public class AwsEnginesTest extends AwsSpringTest {
 	public void setUp() throws Exception {
 		log.trace("setUp()");
 
+		Assume.assumeTrue(super.runAwsIntegrationTests());
+
 		assertThat(awsEngines, is(notNullValue()));
 	}
 	
