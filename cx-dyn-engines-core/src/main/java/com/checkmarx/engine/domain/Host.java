@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2017 Checkmarx
- * 
+ * Copyright (c) 2017-2019 Checkmarx
+ *  
  * This software is licensed for customer's internal use only.
  *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
