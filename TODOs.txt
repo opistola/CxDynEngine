@@ -23,7 +23,7 @@ Features
 [ ] Add scanid tag to aws engine server
 [ ] Populate active scan map from running engines
 [ ] Clean up logging
-[ ] Refa	ctor EngineService/EngineMonitor class structure
+[ ] Refactor EngineService/EngineMonitor class structure
 [ ] Refactor EnginePool/DynamicEngine state machine
 [ ] Add ec2 post launch script
 [ ] **Refactor EnginePool to include pool queue
