@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.checkmarx.engine.domain.EnginePool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,9 @@ public class ScanQueueMonitor implements Runnable {
 	private final BlockingQueue<ScanRequest> scanQueued;
 	//private final BlockingQueue<ScanRequest> scanWorking;
 	private final BlockingQueue<ScanRequest> scanFinished;
-	
+	private final EnginePool enginePool;
+
+
 	/**
 	 * Map of active scan requests by Scan.Id
 	 */
@@ -49,6 +52,7 @@ public class ScanQueueMonitor implements Runnable {
 			BlockingQueue<ScanRequest> scanQueued, 
 			//BlockingQueue<ScanRequest> scanWorking,
 			BlockingQueue<ScanRequest> scanFinished,
+			EnginePool enginePool,
 			CxEngineApi cxClient,
 			CxConfig config) {
 		log.info("ctor(): {}", config);
@@ -56,6 +60,7 @@ public class ScanQueueMonitor implements Runnable {
 		this.scanQueued = scanQueued;
 		//this.scanWorking = scanWorking;
 		this.scanFinished = scanFinished;
+		this.enginePool = enginePool;
 		this.cxClient = cxClient;
 		//this.config = config;
 		this.concurrentScanLimit = config.getConcurrentScanLimit();
@@ -84,6 +89,13 @@ public class ScanQueueMonitor implements Runnable {
 		log.debug("processScan(): {}", scan);
 		
 		final long scanId = scan.getId();
+		//if the scan loc is zero, it is not ready to determine if applicable to Dynamic Engines
+		//if the calcEngineSize ends up with null, their is no applicable engine, therefore Dynamic Engines ignores
+		//TODO replace this block when static engines are managed by Dynamic Engines
+		if(enginePool.calcEngineSize(scan.getLoc()) == null && scan.getLoc() > 0){
+			log.debug("Scan with id {} with loc {} is being ignored by DynamicEngines", scan.getId(), scan.getLoc());
+			return;
+		}
 		switch (scan.getStatus()) {
 			case Queued :
 				onQueued(scanId, scan);
