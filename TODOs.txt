@@ -23,7 +23,7 @@ Features
 [ ] Add scanid tag to aws engine server
 [ ] Populate active scan map from running engines
 [ ] Clean up logging
-[ ] Refactor EngineService/EngineMonitor class structure
+[ ] Refa	ctor EngineService/EngineMonitor class structure
 [ ] Refactor EnginePool/DynamicEngine state machine
 [ ] Add ec2 post launch script
 [ ] **Refactor EnginePool to include pool queue
@@ -33,7 +33,7 @@ Fixed
 [X] Handle Cx session timeout
 [X] AWS Describe instance failure causes scan lost - add retry 
 [X] ScanRequest dates may fail unmarshalling if they don't contain 3 millisec digits
-[ ] Nullpointer during blocking - think due to v8.6 EngineState change
+[X] Nullpointer during blocking - think due to v8.6 EngineState change
 [ ] Disk encryption caused launch failure - what does AWS return?
 [ ] cxManagerURL is logged incorrectly
 [ ] Launching multiple scans on startup, exceeds limits
@@ -60,4 +60,4 @@ MOVE SALES
 CxMS
 [ ] Test start/stop times for large instances
 [ ] Allow start/stop not terminate on pool basis (m5 - 50s)
-[ ] Check logic when launching engine times out - should terminate old, launch new engine
+[X] Check logic when launching engine times out - should terminate old, launch new engine

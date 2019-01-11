@@ -16,6 +16,10 @@ package com.checkmarx.engine.aws;
 public class AwsConstants {
 
 	public final static String NAME_TAG = "Name";
+
+	public static final long RETRY_DELAY = 500; // ms
+	public static final int RETRY_ATTEMPTS = 2;
+
 	//public final static long BILLING_INTERVAL_SECS = TimeUnit.MINUTES.toSeconds(60);
 	//public final static long BILLING_INTERVAL_SECS = TimeUnit.MINUTES.toSeconds(10); // for testing
 }

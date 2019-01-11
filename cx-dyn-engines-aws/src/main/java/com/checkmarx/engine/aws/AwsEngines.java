@@ -23,6 +23,8 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.ec2.model.Instance;
@@ -177,6 +179,10 @@ public class AwsEngines implements CxEngines {
 	}
 
 	@Override
+	@Retryable(
+			value = { RuntimeException.class },
+			maxAttempts = AwsConstants.RETRY_ATTEMPTS,
+			backoff = @Backoff(delay = AwsConstants.RETRY_DELAY))
 	public void launch(DynamicEngine engine, EngineSize size, boolean waitForSpinup) {
 		log.debug("launch(): {}; size={}; wait={}", engine, size, waitForSpinup);
 		
@@ -197,7 +203,7 @@ public class AwsEngines implements CxEngines {
 			if (instance == null) {
 				instance = launchEngine(engine, name, type, tags);
 			}
-
+	
 			instanceId = instance.getInstanceId();
 			
 			if (Ec2.isTerminated(instance)) {
@@ -208,6 +214,7 @@ public class AwsEngines implements CxEngines {
 			} else {
 				// host is running
 			}
+			
 			final Host host = createHost(name, instance);
 			engine.setHost(host);
 			
