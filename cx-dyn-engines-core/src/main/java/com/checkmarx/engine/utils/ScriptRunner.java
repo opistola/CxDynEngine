@@ -121,6 +121,7 @@ public class ScriptRunner<T> implements Runnable {
 		
 	}
 	
+	@SuppressWarnings("deprecation")
 	private String readScript(String scriptFile) {
 		if (scriptFile == null) return null;
 		
