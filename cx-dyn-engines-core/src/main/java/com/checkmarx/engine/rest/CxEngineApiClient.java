@@ -16,7 +16,6 @@ package com.checkmarx.engine.rest;
 import java.util.Arrays;
 import java.util.List;
 
-import com.checkmarx.engine.domain.DynamicEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;

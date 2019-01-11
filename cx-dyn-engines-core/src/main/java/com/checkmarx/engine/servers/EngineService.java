@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
 
-import jdk.nashorn.internal.parser.JSONParser;
-import org.json.JSONObject;
+//import jdk.nashorn.internal.parser.JSONParser;
+//import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -35,7 +35,6 @@ import com.checkmarx.engine.rest.model.EngineServer;
 import com.checkmarx.engine.utils.ExecutorServiceUtils;
 import com.google.common.collect.Lists;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpStatusCodeException;
 
 @Component
 public class EngineService implements Runnable {
