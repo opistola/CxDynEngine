@@ -151,6 +151,8 @@ public class ScanRequest {
 	}
 
 	public Integer getLoc() {
+		if(loc == null)
+			return 0;
 		return loc;
 	}
 
