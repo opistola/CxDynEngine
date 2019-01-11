@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -89,7 +90,7 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		log.debug("{}", cxClient);
 		final String version = cxClient.getCxVersion();
 		assertThat(version, is(not(equalTo("Unknown"))));
-		
+		assertTrue(CxVersion.isMinVersion86(version));
 	}
 	
 	@Test
