@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2017 Checkmarx
- * 
+ * Copyright (c) 2017-2019 Checkmarx
+ *  
  * This software is licensed for customer's internal use only.
  *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -15,10 +15,12 @@ package com.checkmarx.engine.rest;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -38,6 +40,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import com.checkmarx.engine.CoreSpringTest;
 import com.checkmarx.engine.rest.model.EngineServer;
+import com.checkmarx.engine.rest.model.EngineServerV86;
+import com.checkmarx.engine.rest.model.EngineServerV86.EngineState;
 import com.checkmarx.engine.rest.model.Login;
 import com.checkmarx.engine.rest.model.ScanRequest;
 
@@ -80,6 +84,16 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 	}
 	
 	@Test
+	public void testCxVersion() {
+		log.trace("testCxVersion()");
+
+		log.debug("{}", cxClient);
+		final String version = cxClient.getCxVersion();
+		assertThat(version, is(not(equalTo("Unknown"))));
+		assertTrue(CxVersion.isMinVersion86(version));
+	}
+	
+	@Test
 	public void testGetEngineServers() {
 		log.trace("testGetEngineServers()");
 		
@@ -105,6 +119,8 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		final EngineServer engine = cxClient.getEngine(engineId);
 		assertThat(engine, is(notNullValue()));
 		assertThat(engine.getId(), is(equalTo(engineId)));
+		
+		log.debug("{}", engine);
 	}
 	
 	@Test
@@ -147,8 +163,13 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 		assertThat(engine2.getMaxLoc(), is(equalTo(engine1.getMaxLoc())));
 		assertThat(engine2.getMaxScans(), is(equalTo(engine1.getMaxScans())));
 		assertThat(engine2.getUri(), is(equalTo(engine1.getUri())));
-		assertThat(engine2.isBlocked(), is(equalTo(engine1.isBlocked())));
+		//assertThat(engine2.isBlocked(), is(equalTo(engine1.isBlocked())));
 		assertThat(engine2.isAlive(), is(equalTo(false)));
+		if (CxVersion.isMinVersion86(cxClient.getCxVersion())) {
+			EngineServerV86 engineV86 = (EngineServerV86)engine2;
+			assertThat(engineV86.getStatus(), is(notNullValue()));
+			assertThat(engineV86.getState(), is(equalTo(EngineState.Offline)));
+		}
 	}
 	
 	@Test
@@ -173,13 +194,29 @@ public class CxEngineApiClientTests extends CoreSpringTest {
 	}
 	
 	@Test
+	public void testBlockEngine() {
+		log.trace("testBlockEngine()");
+		
+		final EngineServerV86 engine = (EngineServerV86) cxClient.getEngine(engineId);
+		log.debug("before={}", engine);
+		if (engine.isBlocked()) {
+			final EngineServer engine2 = cxClient.unblockEngine(engineId);
+			assertThat(engine2.isBlocked(), is(false));
+		} else {
+			final EngineServer engine3 = cxClient.blockEngine(engineId);
+			assertThat(engine3.isBlocked(), is(true));
+		}
+		log.debug("after={}", cxClient.unblockEngine(engineId));
+	}
+	
+	@Test
 	public void testGetScansQueue() {
 		log.trace("testGetScansQueue()");
 
 		final List<ScanRequest> scans = cxClient.getScansQueue();
 		assertThat(scans, is(notNullValue()));
 		for (ScanRequest scan : scans) {
-			log.debug("{}", scan);
+			log.debug("{}", scan.toString(true));
 		}
 	}
 	

@@ -11,34 +11,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ******************************************************************************/
-package com.checkmarx.engine.domain;
+package com.checkmarx.engine.rest.model;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-
-import com.checkmarx.engine.rest.model.ScanRequest;
 import com.google.common.base.MoreObjects;
 
-public class ScanQueue {
+public class Engine {
+
+	private long id;
 	
-	private final int capacity;
-	private final BlockingQueue<ScanRequest> queue;
-	
-	public ScanQueue(int capacity) {
-		this.capacity = capacity;
-		this.queue = new ArrayBlockingQueue<ScanRequest>(capacity);
+	public Engine() {
+		// default .ctor for unmarshalling
 	}
 
-	public BlockingQueue<ScanRequest> getQueue() {
-		return queue;
+	public Engine(long id) {
+		this.id = id;
+	}
+
+	public long getId() {
+		return id;
 	}
 
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
-				.add("capacity", capacity)
-				.add("queuedCount", queue.size())
+				.add("id", id)
 				.toString();
 	}
-
 }

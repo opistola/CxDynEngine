@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2017 Checkmarx
- * 
+ * Copyright (c) 2017-2019 Checkmarx
+ *  
  * This software is licensed for customer's internal use only.
  *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -76,7 +76,7 @@ public class EngineServer {
 	}
 
 	public Boolean isAlive() {
-		return alive;
+		return alive == null ? Boolean.FALSE : alive;
 	}
 
 	public int getMaxScans() {
@@ -94,20 +94,28 @@ public class EngineServer {
 	public String getCxVersion() {
 		return cxVersion;
 	}
+	
+	public EngineServerDTO toDTO() {
+		return new EngineServerDTO(name, uri, minLoc, maxLoc, blocked);
+	}
 
-	@Override
-	public String toString() {
+	protected MoreObjects.ToStringHelper toStringHelper() {
 		return MoreObjects.toStringHelper(this)
 				.add("id", id)
 				.add("name", name)
 				.add("uri", uri)
 				.add("minLOC", minLoc)
 				.add("maxLOC", maxLoc)
-				.add("isAlive", alive)
+				.add("isAlive", isAlive())
 				.add("maxScans", maxScans)
-				.add("isBlocked", blocked)
+				.add("isBlocked", isBlocked())
 				.add("cxVersion", cxVersion)
-				.omitNullValues()
-				.toString();
+				.omitNullValues();
 	}
+
+	@Override
+	public String toString() {
+		return toStringHelper().toString();
+	}
+	
 }

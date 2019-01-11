@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2017-2019 Checkmarx
+ *  
+ * This software is licensed for customer's internal use only.
+ *  
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ ******************************************************************************/
 /**
  * Copyright (c) 2017 Checkmarx
  *
@@ -24,7 +37,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,16 +99,12 @@ public class KeystoreSecretProvider implements SecretProvider {
 	private KeyStore loadKeyStore(SecureString storePw) {
 		log.debug("loadKeyStore() : keystore={}", keystoreFile.getAbsolutePath());
 		
-		FileInputStream fs = null;
-		try {
-			final KeyStore ks = KeyStore.getInstance("JCEKS");
-			fs = new FileInputStream(keystoreFile);
+		try (FileInputStream fs = new FileInputStream(keystoreFile)) {
+			KeyStore ks = KeyStore.getInstance("JCEKS");
 			ks.load(fs, storePw.array());
 			return ks;
 		} catch (Exception e) {
 			throw new RuntimeException("Error loading KeyStore", e);
-		} finally {
-			IOUtils.closeQuietly(fs);
 		}
 	}
 	
@@ -130,18 +138,16 @@ public class KeystoreSecretProvider implements SecretProvider {
 	public void store(String key, SecureString secret) {
 		log.trace("store() : key={}", key);
 
-		FileOutputStream fos = null;
 		try {
 			final SecretKey generatedSecret = skf.generateSecret(new PBEKeySpec(secret.array()));
 			secret.clear(); // clear sensitive data
 			keystore.setEntry(key, new KeyStore.SecretKeyEntry(generatedSecret), kspp);
 
-			fos = new java.io.FileOutputStream(keystoreFile);
-			keystore.store(fos, keystorePw.array());
+			try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+				keystore.store(fos, keystorePw.array());
+			}
 		} catch (Exception e) {
 			throw new RuntimeException("Error storing secret to KeyStore", e);
-		} finally {
-			IOUtils.closeQuietly(fos);
 		}
 		
 	}

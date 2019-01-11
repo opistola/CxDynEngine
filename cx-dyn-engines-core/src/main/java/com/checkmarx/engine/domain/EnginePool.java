@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2017 Checkmarx
- * 
+ * Copyright (c) 2017-2019 Checkmarx
+ *  
  * This software is licensed for customer's internal use only.
  *  
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -67,6 +67,12 @@ public class EnginePool {
 	private final Map<String, EngineSize> scanSizes = Maps.newConcurrentMap();
 	
 	
+	/**
+	 * map of minimum engines by size; key=size name (string)
+	 */
+	private final Map<String, Integer> poolMins = Maps.newConcurrentMap();
+	
+	
 	public EnginePool(Set<EnginePoolEntry> entries, Set<DynamicEngine> engines) {
 		this(entries);
 		engines.forEach(engine->addEngine(engine));
@@ -86,6 +92,7 @@ public class EnginePool {
 			final EngineSize scanSize = entry.getScanSize();
 			final String size = scanSize.getName();
 			scanSizes.put(scanSize.getName(), scanSize);
+			poolMins.put(size, entry.getMinimum());
 			engineSizes.put(scanSize, new AtomicLong(0));
 			engineMaps.forEach((k, map)->initEngineMaps(size, map));
 			log.info("Adding engine size; {}", scanSize); 
@@ -288,8 +295,11 @@ public class EnginePool {
 				
 				// loop thru IDLE engines looking for expiration
 				idleEngines.forEach((engineSize, engines) -> {
-					
-					engines.forEach((engine) -> checkExpiredEngine(expiredCount, engine));
+					int minEngines = poolMins.get(engineSize);
+					log.debug("Idle engines: size={}; count={0}; minimum={}", engineSize, engines.size(), minEngines);
+					if (engines.size() > minEngines) {
+						engines.forEach((engine) -> checkExpiredEngine(expiredCount, engine));
+					}
 					log.debug("Expiring engines: size={}; count={}", engineSize, expiredCount.get());
 				});
 				
